@@ -347,67 +347,6 @@ def match_sinks(slices):
         find_sink(after_diff, cv_list, sink_results, sink_cv, epoch)
         epoch += 1
 
-    # for cv in cvs:  # 对于每个关键变量
-    #     # print('now, is ' + cv)
-    #     if (cv in tmp):
-    #         continue
-    #     tmp.append(cv)
-    #     num = len(sink_results)
-    #     if ('[' in cv):
-    #         cvs.append(cv[:(cv.find('['))])  # 先把数组头放进去
-    #
-    #     sp_cv = special_cv_process(cv)  # 特殊变量的处理
-    #     if (len(sp_cv) > 1):
-    #         cv = sp_cv[0]
-    #         for i in range(1, len(sp_cv)):  # 这种是因为提取数组下标提取出了多个变量
-    #             cvs.append(sp_cv[i])
-    #     else:
-    #         cv = sp_cv[0]
-    #
-    #     print('now, is ' + cv)
-    #
-    #     for line in slices:
-    #         this_loc = line.split('location: ')[-1].split(' file: ')[0]
-    #         this_file = line.split('file: ')[-1].split('/')[-1].strip()
-    #         if ('(key_var lines)' in line):  # 包含当前行
-    #             flag = 1
-    #         elif ((sign == 0) and (this_loc == loc) and (this_file == vul_file)):
-    #             flag = 1
-    #             print(line)
-    #         if (flag == 0):
-    #             continue
-    #         if (is_funcdefine(line)):  # 如果是函数定义行,不参与sink点竞选,但如果涉及cv,则要进行一个cv的转换
-    #             continue
-    #
-    #         if (has_cv_fz_right(cv, line)):  # 允许1次转换
-    #             tmp_cv = line.split(' =')[0].strip()
-    #             tmp_cv = left_process(tmp_cv, 'space')  # 对等号左边的变量进行处理(去掉可能存在的类型名等)
-    #             print(line)
-    #             print(tmp_cv, '?????')
-    #             if (cv not in tmp):
-    #                 cvs.append(tmp_cv)
-    #                 tmp.append(tmp_cv)
-    #
-    #         if (is_risk_func(line, cv) and mem):
-    #             print('mem:  ', line)
-    #             sink_results.append(line)
-    #             mem = False
-    #         if (is_pointer(line, cv) and starcv):
-    #             print('pointer:  ', line)
-    #             sink_results.append(line)
-    #             starcv = False
-    #         if (is_array(line, cv) and arrycv):
-    #             print('array:  ', line)
-    #             sink_results.append(line)
-    #             arrycv = False
-    #
-    #     if (len(sink_results) == num):  # 针对该变量没有找到sink点,取它的上一级变量
-    #         new_cv = left_process(cv, 'up')
-    #         print(new_cv, '!!!!!!!!!!!')
-    #         cvs.append(new_cv)
-    #         tmp.append(cv)
-    #         print(cvs)
-
     return sink_results, sink_cv
 
 
