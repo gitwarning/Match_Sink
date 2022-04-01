@@ -5,8 +5,8 @@ import ast
 
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/CVE-2013-4263_CWE-119_e43a0a232dbf6d3c161823c2e07c52e76227a1bc_vf_boxblur.c_4.0_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/slices.txt'
-old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2014-2099/CVE-2014-2099_CWE-189_c919e1ca2ecfc47d796382973ba0e48b8f6f92a2_msrle.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2014-2099/slices.txt"
+old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2014-8546/CVE-2014-8546_CWE-189_e7e5114c506957f40aafd794e06de1a7e341e9d5_cinepak.c_2.1_OLD.c"
+slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2014-8546/slices.txt"
 list_key_words = []  # api函数列表
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed']
@@ -51,6 +51,10 @@ def is_array(line, cv):
     # ptr += s -> frame -> linesize [ 0 ] 不算数组访问越界吧
     if(cv +' [ 0 ]') in line:
         return False
+    if '[ 0 ]' in line:
+        line = line.replace('[ 0 ]', '')
+        if '[' and ']' not in line:
+            return False
     # 其实关键变量只要在[]里面就算是在数组下标里了,可能和其他值一起参与了计算,例如dst[y+len]这样
     lbracket = line.find('[')
     rbracket = line.rfind(']')
@@ -90,6 +94,8 @@ def is_calculation(line, cv):
     if (cv + '+=') in line:
         return True
     if (cv + ' -') in line and (cv + ' ->') not in line:
+        return True
+    if ('- ' + cv) in line:
         return True
     return False
 
