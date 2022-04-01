@@ -3,10 +3,10 @@ import os
 from markupsafe import re
 import ast
 
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-0878/CVE-2013-0878_CWE-119_f5955d9f6f9ffdb81864c3de1c7b801782a55725_targa.c_1.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-0878/slices.txt'
-# old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-2495/CVE-2013-2495_CWE-189_31a77177ff323ef83944c60a8654891213ab6691_iff.c_1.1_OLD.c"
-# slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-2495/slices.txt"
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/CVE-2013-4263_CWE-119_e43a0a232dbf6d3c161823c2e07c52e76227a1bc_vf_boxblur.c_4.0_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/slices.txt'
+old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/CVE-2015-6819_CWE-189_84afc6b70d24fc0bf686e43138c96cf60a9445fe_mjpegdec.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/slices.txt"
 list_key_words = []  # api函数列表
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed']
@@ -55,7 +55,7 @@ def is_array(line, cv):
         line = line.replace('[ 0 ]', '')
         if '[' and ']' not in line:
             return False
-            
+
     # 其实关键变量只要在[]里面就算是在数组下标里了,可能和其他值一起参与了计算,例如dst[y+len]这样
     lbracket = line.find('[')
     rbracket = line.rfind(']')
@@ -98,6 +98,7 @@ def is_calculation(line, cv):
         return True
     if ('- ' + cv) in line:
         return True
+    return False
 
 
 # 判断是否为函数定义
@@ -127,7 +128,11 @@ def special_cv_process(cv):
         start = cv.rfind('[')
         end = cv.rfind(']')
         new_cv_str = cv[(start + 1):end]
-        cv = re.split('[+|-|*|/|%|>>|<<|>|<|=]', new_cv_str)  # data [ plane + 4 ] [ end + 3 ]
+        # 在切分'-'的时候有问题，把减号单独拿出来切分
+        if '->' not in new_cv_str and '-' in new_cv_str:
+            cv = new_cv_str.split('-')
+        else:
+            cv = re.split('[+|*|/|%|>>|<<|>|<|=]', new_cv_str)  # data [ plane + 4 ] [ end + 3 ]
 
     if ('.' in cv):  # pd.size转换成pd . size
         new_cv = ''
@@ -248,34 +253,25 @@ def is_return_cv(line, cv):
     line = line.strip()
     if(line[:7] != 'return '):
         return False
-    
+
     if(' ' + cv + ' ') in line:
         return True
     else:
         return False
 
 def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name):
-    # 应该放到CV循环里，否则只有第一个CV能参加匹配
-    # array_sink = True
-    # pointer_sink = True
-    # risk_func_sink = True
-    # if cwe == '119':
-    #     calculation_sink = False
-    # elif cwe == '189':
-    #     calculation_sink = True
-    
     # 对于每一个cv都去匹配sink点
     for cv in cv_list[epoch]:
         array_sink = True
         pointer_sink = True
         risk_func_sink = True
+        calculation_sink = True
+        sink_appended = False  # 标识该cv是否已经被添加到sink_cv过
         if cwe == '119':
             calculation_sink = False
         elif cwe == '189':
             calculation_sink = True
         return_flag = False
-
-        # num = len(sink_results)
         if ('[' in cv):
             cv_list.append(cv[:(cv.find('['))])  # 先把数组头放进去
 
@@ -290,11 +286,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name):
         print("=======now CV is " + cv + "=========")
         # 找到diff修改的行，从diff修改行向下寻找sink点
         for i, line in enumerate(after_diff):
-            sink_appended = False #标识该行是否已经被添加到sink_results过
-
             if is_return_cv(line, cv):
                 return_flag = True
-
             # 如果当前行是函数定义行，不参加sink点的匹配，但是可能涉及到sink点的转换（通过参数位置转换
             if is_funcdefine(line):
                 # 函数定义的上一行不一定是该函数的函数调用行,先判断上一行是否是函数调用行（函数名）获取上一行的信息，
@@ -320,7 +313,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name):
             if (' = ' in line) and (func_name != []) and (return_flag == True):
                 this_line_func = func_name[0]
                 if this_line_func == vul_name:
-                    print('该行是对漏洞函数的调用行且有返回值')
+                    print('该行是对漏洞函数的调用行且有返回值: ', line)
                     return_cv = line.split(' = ')[0].split(' ')[-1].strip() # int line = advance_line ( dst , line , stride , & y , h , interleave );
                     if return_cv != cv and return_cv not in cv_list[epoch]:
                         cv_list[epoch].append(return_cv)
@@ -368,8 +361,6 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name):
                 print('CV转化行：', line)
                 print('转换后的CV：', tmp_cv)
     # 当前所有CV都没有匹配到sink点，将其上一级加入到下一次要匹配的CV中cvList[epoch+1]
-    # TODO 还是说要针对每一个CV？
-    # if len(sink_results) == num:
     if len(sink_results) == 0:
         for cv in cv_list[epoch]:
             sp_cv = special_cv_process(cv)  # 特殊变量的处理
@@ -402,7 +393,7 @@ def match_sinks(slices, cwe):
     loc = slices[0].split(' ')[3]
     vul_file = slices[0].split(' ')[1].split('_')[3]
     vul_name = slices[0].split(' ')[2].strip()
-    if(vul_name[0] == '*'):
+    if (vul_name[0] == '*'):
         vul_name = vul_name[1:]
 
     after_diff = []
@@ -669,7 +660,7 @@ def main():
     all_sinks = []
     all_sources = []
     sink_cv = []
-    cwe = '119' # 可改成args[0]
+    cwe = '119'  # 可改成args[0]
     with open(slice_file, 'r') as f:
         all_content = f.readlines()
         for line in all_content:
