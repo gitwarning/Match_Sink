@@ -343,6 +343,7 @@ def match_sinks(slices):
     end = slices[0].rfind(']')
 
     cv_list[0] = ast.literal_eval(slices[0][start:(end + 1)])
+    cv_list = list(set(cv_list))  # 对cv_list去重
     loc = slices[0].split(' ')[3]
     vul_file = slices[0].split(' ')[1].split('_')[3]
 
