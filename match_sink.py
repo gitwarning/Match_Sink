@@ -5,8 +5,8 @@ import ast
 
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/CVE-2013-4263_CWE-119_e43a0a232dbf6d3c161823c2e07c52e76227a1bc_vf_boxblur.c_4.0_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/slices.txt'
-old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-2495/CVE-2013-2495_CWE-189_31a77177ff323ef83944c60a8654891213ab6691_iff.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-2495/slices.txt"
+old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-7014/CVE-2013-7014_CWE-189_86736f59d6a527d8bc807d09b93f971c0fe0bb07_pngdsp.c_1.2_OLD.c"
+slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-7014/slices.txt"
 list_key_words = []  # api函数列表
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed']
@@ -84,8 +84,11 @@ def is_calculation(line, cv):
         return True
     if (cv + ' +') in line:
         return True
+    if (cv + '+=') in line:
+        return True
     if (cv + ' -') in line and (cv + ' ->') not in line:
         return True
+    return False
 
 
 # 判断是否为函数定义
@@ -496,16 +499,7 @@ def match_sources(slices, sink_cv):
     for cv in sink_cv:
         num = len(source_results)
         print('now, is ' + cv)
-
-        # cv = special_cv_process(cv)
-        sp_cv = special_cv_process(cv)  # 特殊变量的处理
-        if (len(sp_cv) > 1):
-            cv = sp_cv[0]
-            for i in range(1, len(sp_cv)):  # 这种是因为提取数组下标提取出了多个变量
-                sink_cv.append(sp_cv[i])
-        else:
-            cv = sp_cv[0]
-
+        # 从sink_cv得到的关键变量不需要再一次的特殊处理
         # 寻找外部函数定义处
         flag = 0
         for line in source_lines:
