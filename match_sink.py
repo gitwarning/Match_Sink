@@ -5,8 +5,8 @@ import ast
 
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/CVE-2013-4263_CWE-119_e43a0a232dbf6d3c161823c2e07c52e76227a1bc_vf_boxblur.c_4.0_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/slices.txt'
-old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-0876/CVE-2013-0876_CWE-189_5260edee7e5bd975837696c8c8c1a80eb2fbd7c1_sanm.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-0876/slices.txt"
+old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-2495/CVE-2013-2495_CWE-189_31a77177ff323ef83944c60a8654891213ab6691_iff.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-2495/slices.txt"
 list_key_words = []  # api函数列表
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed']
@@ -328,7 +328,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch):
             if new_cv not in cv_list[epoch + 1] and new_cv not in cv_list[epoch]:
                 print('CV的上一级是：', new_cv)
                 cv_list[epoch + 1].append(new_cv)
-
+    print(epoch)
     print("如果当前cv列表没有找到sink点，下次查找的cv是：", cv_list[epoch + 1])
 
 
@@ -343,7 +343,7 @@ def match_sinks(slices):
     end = slices[0].rfind(']')
 
     cv_list[0] = ast.literal_eval(slices[0][start:(end + 1)])
-    cv_list = list(set(cv_list))  # 对cv_list去重
+    cv_list[0] = list(set(cv_list[0]))  # 对cv_list去重
     loc = slices[0].split(' ')[3]
     vul_file = slices[0].split(' ')[1].split('_')[3]
 
