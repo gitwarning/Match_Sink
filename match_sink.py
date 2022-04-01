@@ -5,8 +5,8 @@ import ast
 
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/CVE-2013-4263_CWE-119_e43a0a232dbf6d3c161823c2e07c52e76227a1bc_vf_boxblur.c_4.0_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/slices.txt'
-old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-7014/CVE-2013-7014_CWE-189_86736f59d6a527d8bc807d09b93f971c0fe0bb07_pngdsp.c_1.2_OLD.c"
-slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-7014/slices.txt"
+old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2014-2099/CVE-2014-2099_CWE-189_c919e1ca2ecfc47d796382973ba0e48b8f6f92a2_msrle.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2014-2099/slices.txt"
 list_key_words = []  # api函数列表
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed']
@@ -48,6 +48,9 @@ def is_pointer(line, cv):
 
 # 关键变量为数组下标或者作为数组的使用
 def is_array(line, cv):
+    # ptr += s -> frame -> linesize [ 0 ] 不算数组访问越界吧
+    if(cv +' [ 0 ]') in line:
+        return False
     # 其实关键变量只要在[]里面就算是在数组下标里了,可能和其他值一起参与了计算,例如dst[y+len]这样
     lbracket = line.find('[')
     rbracket = line.rfind(']')
@@ -370,9 +373,6 @@ def match_sinks(slices):
     return sink_results, sink_cv
 
 
-
-
-
 def has_cv(cv, line):
     # print(('*' + cv + ','))
 
@@ -429,9 +429,6 @@ def has_cv_fz_left(cv, line):
         return True
     '''
     return False
-
-
-
 
 
 # 在漏洞文件中继续往下找第一次用cv的地方
@@ -570,7 +567,7 @@ def match_sources(slices, sink_cv):
         if (tmp_line == ''):  # 没有找到任何有关键变量出现的语句(显然是不合理的，这种是数组/指针类型，还需要进一步处理)
             continue
         # print(vulf_define)
-        if ('=' not in tmp_line): # 当前行可能是函数定义行
+        if ('=' not in tmp_line):  # 当前行可能是函数定义行
             # print(vulf_define)
             # print(tmp_line)
             if (tmp_line.strip() in vulf_define.strip()):  # 如果出现在函数定义行,则视为函数参数
@@ -634,4 +631,3 @@ def main():
 
 
 main()
-
