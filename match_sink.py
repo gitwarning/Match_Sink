@@ -55,7 +55,7 @@ def is_array(line, cv):
         line = line.replace('[ 0 ]', '')
         if '[' and ']' not in line:
             return False
-
+            
     # 其实关键变量只要在[]里面就算是在数组下标里了,可能和其他值一起参与了计算,例如dst[y+len]这样
     lbracket = line.find('[')
     rbracket = line.rfind(']')
@@ -91,6 +91,8 @@ def is_calculation(line, cv):
     if ('* ' + cv) in line and '=' in line:
         return True
     if (cv + ' +') in line:
+        return True
+    if (cv + '+=') in line:
         return True
     if (cv + ' -') in line and (cv + ' ->') not in line:
         return True
@@ -355,7 +357,11 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name):
                 calculation_sink = False
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
             if has_cv_fz_right(cv, line):
-                tmp_cv = line.split('=')[0].strip()
+
+                if '+=' in line:
+                    tmp_cv = line.split('+=')[0].strip()
+                else:
+                    tmp_cv = line.split('=')[0].strip()
                 tmp_cv = left_process(tmp_cv, 'space')  # 对等号左边的变量进行处理(去掉可能存在的类型名等)
                 if tmp_cv not in cv_list[epoch + 1]:
                     cv_list[epoch + 1].append(tmp_cv)
@@ -419,7 +425,6 @@ def match_sinks(slices, cwe):
     return sink_results, sink_cv
 
 
-
 def has_cv(cv, line):
     # print(('*' + cv + ','))
 
@@ -478,9 +483,6 @@ def has_cv_fz_left(cv, line):
     return False
 
 
-
-
-
 # 在漏洞文件中继续往下找第一次用cv的地方
 def find_in_vulfile(tmp_line, cv):
     location = 0
@@ -506,6 +508,15 @@ def has_only_cv(line, cv):
     if (cv + ' .') in line:
         return False
     return has_cv(cv, line)
+
+
+# 判断是否是表达式
+def is_expression(cv):
+    cvs = re.split('[*+/-]', cv)
+    if len(cvs) > 1:
+        return True
+    else:
+        return False
 
 
 def match_sources(slices, sink_cv):
@@ -546,16 +557,7 @@ def match_sources(slices, sink_cv):
     for cv in sink_cv:
         num = len(source_results)
         print('now, is ' + cv)
-
-        # cv = special_cv_process(cv)
-        sp_cv = special_cv_process(cv)  # 特殊变量的处理
-        if (len(sp_cv) > 1):
-            cv = sp_cv[0]
-            for i in range(1, len(sp_cv)):  # 这种是因为提取数组下标提取出了多个变量
-                sink_cv.append(sp_cv[i])
-        else:
-            cv = sp_cv[0]
-
+        # 从sink_cv得到的关键变量不需要再一次的特殊处理
         # 寻找外部函数定义处
         flag = 0
         for line in source_lines:
@@ -573,7 +575,7 @@ def match_sources(slices, sink_cv):
                         # return source_results
         if (flag == 1):
             print('外部函数定义')
-            break
+            continue
 
         # 函数内变量定义处和函数参数
         # source_tmp = source_lines
@@ -593,10 +595,18 @@ def match_sources(slices, sink_cv):
             if has_only_cv(line, tmp_cv) and not has_cv_fz_left(tmp_cv, line):  # 如果含有关键变量但不含等号赋值
                 tmp_line = line  # 先暂存当前语句，然后继续向上找
             if has_only_cv(line, tmp_cv) and has_cv_fz_left(tmp_cv, line):  # 含有等号的赋值
-                # print(tmp_cv, line)
+                #( avctx -> width * avctx -> bits_per_coded_sample + 7 ) / 8  的值赋值给了CV tmp_cv可能是一个表达式，如何区分出来
                 tmp_cv = re.split('[,;]', line.split(' = ')[-1])[0]  # 取出等号右边的变量，把谁的值赋给了CV，CV=b，继续向上跟踪b
-                tmp_line = line
-                print(tmp_cv, '的值赋值给了CV')
+                if is_expression(tmp_cv):
+                    flag = 2
+                    source_results.append(line)
+                    break
+                else:
+                    tmp_line = line
+                    print(tmp_cv, '的值赋值给了CV')
+        if flag == 2:
+            print("CV是由多个变量共同确定，将此行定位source点：", line)
+            continue
 
         print(tmp_cv, '是CV最开始赋值的变量。经过变量转换后，CV最终是由', tmp_line)
 
@@ -626,7 +636,7 @@ def match_sources(slices, sink_cv):
         if (tmp_line == ''):  # 没有找到任何有关键变量出现的语句(显然是不合理的，这种是数组/指针类型，还需要进一步处理)
             continue
         # print(vulf_define)
-        if ('=' not in tmp_line): # 当前行可能是函数定义行
+        if ('=' not in tmp_line):  # 当前行可能是函数定义行
             # print(vulf_define)
             # print(tmp_line)
             if (tmp_line.strip() in vulf_define.strip()):  # 如果出现在函数定义行,则视为函数参数
@@ -691,4 +701,3 @@ def main():
 
 
 main()
-
