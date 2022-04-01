@@ -5,8 +5,8 @@ import ast
 
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/CVE-2013-4263_CWE-119_e43a0a232dbf6d3c161823c2e07c52e76227a1bc_vf_boxblur.c_4.0_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/slices.txt'
-old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-0862/CVE-2013-0862_CWE-189_f4fb841ad13bab66d4fb0c7ff2a94770df7815d8_sanm.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-0862/slices.txt"
+old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-0876/CVE-2013-0876_CWE-189_5260edee7e5bd975837696c8c8c1a80eb2fbd7c1_sanm.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2013-0876/slices.txt"
 list_key_words = []  # api函数列表
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed']
@@ -255,9 +255,12 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch):
                     if cvv in call_paras:
                         i = call_paras.index(cvv)
                         func_paras = line[line.find('(') + 1:line.rfind(')')].split(',')
-                        chang_cv = func_paras[i]
-                        if chang_cv != cv and chang_cv not in cv_list[epoch + 1]:
-                            cv_list[epoch + 1].append(chang_cv)
+                        change_cv = func_paras[i]
+                        # chang_cv 需要去掉前面的变量类型
+                        change_cv = left_process(change_cv, 'space')
+                        if change_cv != cv and change_cv not in cv_list[epoch + 1]:
+                            cv_list[epoch + 1].append(change_cv)
+                            print("当前CV跨函数，经转化后新的CV是：", change_cv)
                 continue
             # 进行sink点匹配
             if is_array(line, cv) and array_sink:
