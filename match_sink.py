@@ -312,7 +312,11 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch):
                 calculation_sink = False
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
             if has_cv_fz_right(cv, line):
-                tmp_cv = line.split('=')[0].strip()
+
+                if '+=' in line:
+                    tmp_cv = line.split('+=')[0].strip()
+                else:
+                    tmp_cv = line.split('=')[0].strip()
                 tmp_cv = left_process(tmp_cv, 'space')  # 对等号左边的变量进行处理(去掉可能存在的类型名等)
                 if tmp_cv not in cv_list[epoch + 1]:
                     cv_list[epoch + 1].append(tmp_cv)
@@ -458,6 +462,15 @@ def has_only_cv(line, cv):
     return has_cv(cv, line)
 
 
+# 判断是否是表达式
+def is_expression(cv):
+    cvs = re.split('[*+/-]', cv)
+    if len(cvs) > 1:
+        return True
+    else:
+        return False
+
+
 def match_sources(slices, sink_cv):
     print('.......................source is start.......................')
     source_results = []
@@ -514,7 +527,7 @@ def match_sources(slices, sink_cv):
                         # return source_results
         if (flag == 1):
             print('外部函数定义')
-            break
+            continue
 
         # 函数内变量定义处和函数参数
         # source_tmp = source_lines
@@ -534,10 +547,18 @@ def match_sources(slices, sink_cv):
             if has_only_cv(line, tmp_cv) and not has_cv_fz_left(tmp_cv, line):  # 如果含有关键变量但不含等号赋值
                 tmp_line = line  # 先暂存当前语句，然后继续向上找
             if has_only_cv(line, tmp_cv) and has_cv_fz_left(tmp_cv, line):  # 含有等号的赋值
-                # print(tmp_cv, line)
+                #( avctx -> width * avctx -> bits_per_coded_sample + 7 ) / 8  的值赋值给了CV tmp_cv可能是一个表达式，如何区分出来
                 tmp_cv = re.split('[,;]', line.split(' = ')[-1])[0]  # 取出等号右边的变量，把谁的值赋给了CV，CV=b，继续向上跟踪b
-                tmp_line = line
-                print(tmp_cv, '的值赋值给了CV')
+                if is_expression(tmp_cv):
+                    flag = 2
+                    source_results.append(line)
+                    break
+                else:
+                    tmp_line = line
+                    print(tmp_cv, '的值赋值给了CV')
+        if flag == 2:
+            print("CV是由多个变量共同确定，将此行定位source点：", line)
+            continue
 
         print(tmp_cv, '是CV最开始赋值的变量。经过变量转换后，CV最终是由', tmp_line)
 
