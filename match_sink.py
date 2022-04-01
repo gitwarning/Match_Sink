@@ -219,6 +219,19 @@ def get_funcname(code):
 
     return result
 
+
+# cv在等号右边（赋值给别人）
+def has_cv_fz_right(cv, line):
+    if ('=' not in line):
+        return False
+    right = line.split('=')[-1]
+    # print('right:', right)
+    if (has_cv(cv, right)):
+        return True
+
+    return False
+
+
 def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch):
     array_sink = True
     pointer_sink = True
@@ -292,7 +305,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch):
                     sink_appended = True
                 calculation_sink = False
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
-            if has_cv_fz_right(line, cv):
+            if has_cv_fz_right(cv, line):
                 tmp_cv = line.split('=')[0].strip()
                 tmp_cv = left_process(tmp_cv, 'space')  # 对等号左边的变量进行处理(去掉可能存在的类型名等)
                 if tmp_cv not in cv_list[epoch + 1]:
@@ -414,16 +427,7 @@ def has_cv_fz_left(cv, line):
     return False
 
 
-# cv在等号右边（赋值给别人）
-def has_cv_fz_right(cv, line):
-    if ('=' not in line):
-        return False
-    right = line.split('=')[-1]
-    # print('right:', right)
-    if (has_cv(cv, right)):
-        return True
 
-    return False
 
 
 # 在漏洞文件中继续往下找第一次用cv的地方
