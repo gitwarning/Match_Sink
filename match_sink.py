@@ -4,6 +4,7 @@ import ast
 
 from sink_CWE119 import sink_119
 from sink_CWE189 import sink_189
+from sink_CWE617 import sink_617
 
 cwe = '189' #匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/CVE-2013-4263_CWE-119_e43a0a232dbf6d3c161823c2e07c52e76227a1bc_vf_boxblur.c_4.0_OLD.c'
@@ -182,6 +183,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
         pointer_sink = True
         risk_func_sink = True
         calculation_sink = True
+        assert_sink = True
         sink_appended = False  # 标识该cv是否已经被添加到sink_cv过
         # if cwe == '119':
         #     calculation_sink = False
@@ -242,6 +244,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
                 sink_189(line, cv, sink_results, array_sink, sink_appended, sink_cv, pointer_sink, risk_func_sink, calculation_sink, point_var)
             elif cwe == '119':
                 sink_119(line, cv, sink_results, array_sink, sink_appended, sink_cv, pointer_sink, risk_func_sink, point_var)
+            elif cwe =='617':
+                sink_617(line, cv, sink_results, assert_sink, sink_appended, sink_cv)
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
             if has_cv_fz_right(cv, line):
 

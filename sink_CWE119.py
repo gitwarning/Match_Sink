@@ -1,7 +1,7 @@
 from share_func import *
 
 
-def sink_119(line, cv, sink_results, array_sink, sink_appended, sink_cv, pointer_sink, risk_func_sink,point_var):
+def sink_119(line, cv, sink_results, array_sink, sink_appended, sink_cv, pointer_sink, risk_func_sink, point_var):
     if is_array(line, cv) and array_sink:
         print('sink点是数组访问越界：', line)
         sink_results.append(line)
