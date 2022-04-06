@@ -6,11 +6,11 @@ from sink_CWE119 import sink_119
 from sink_CWE189 import sink_189
 from sink_CWE617 import sink_617
 
-cwe = '189' #匹配的漏洞类型
+cwe = '617' #匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/CVE-2013-4263_CWE-119_e43a0a232dbf6d3c161823c2e07c52e76227a1bc_vf_boxblur.c_4.0_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/FFmpeg/CVE-2013-4263/slices.txt'
-old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/CVE-2015-6819_CWE-189_84afc6b70d24fc0bf686e43138c96cf60a9445fe_mjpegdec.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/slices.txt"
+old_file = "E:/漏洞检测/已分析过漏洞/CWE-617/CWE-617/CVE-2018-15822/CVE-2018-15822_CWE-617_6b67d7f05918f7a1ee8fc6ff21355d7e8736aa10_flvenc.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/已分析过漏洞/CWE-617/CWE-617/CVE-2018-15822/slices.txt"
 list_key_words = []  # api函数列表
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed']
@@ -184,7 +184,6 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
         risk_func_sink = True
         calculation_sink = True
         assert_sink = True
-        sink_appended = False  # 标识该cv是否已经被添加到sink_cv过
         # if cwe == '119':
         #     calculation_sink = False
         # elif cwe == '189':
@@ -241,11 +240,11 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
             # 进行sink点匹配
             # 对于不同的漏洞类型进行了封装
             if cwe == '189':
-                sink_189(line, cv, sink_results, array_sink, sink_appended, sink_cv, pointer_sink, risk_func_sink, calculation_sink, point_var)
+                sink_189(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, calculation_sink, point_var)
             elif cwe == '119':
-                sink_119(line, cv, sink_results, array_sink, sink_appended, sink_cv, pointer_sink, risk_func_sink, point_var)
-            elif cwe =='617':
-                sink_617(line, cv, sink_results, assert_sink, sink_appended, sink_cv)
+                sink_119(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, point_var)
+            elif cwe == '617':
+                sink_617(line, cv, sink_results, assert_sink, sink_cv)
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
             if has_cv_fz_right(cv, line):
 
@@ -331,7 +330,7 @@ def match_sinks(slices, cwe):
         else:
             find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, '')
         epoch += 1
-
+    sink_cv = list(set(sink_cv))  # 对sink_cv 去重
     return sink_results, sink_cv
 
 
@@ -522,18 +521,6 @@ def match_sources(slices, sink_cv):
 
         # 如果是指针/数组类型，就去掉具体变量，把前面的变量作为cv找；例如s->size变成s
         if (len(source_results) == num):  # 针对该变量没有找到source点(即经过source寻找之后source_results里没有增加新的数据)
-            # if ('->' in cv):
-            #     index = cv.rfind('->')
-            #     new_cv = cv[:index].strip()
-            #     print(new_cv, '===============')
-            #     cvs.append(new_cv)
-            # if ('.' in cv):
-            #     cvs.append(cv[:(cv.rfind('.'))].strip())
-            # if (('[' in cv) and (']' in cv)):  # a[index][s]
-            #     index = cv.rfind('[')
-            #     new_cv = cv[:index].strip()
-            #     cvs.append(new_cv)
-            #  TODO 可以直接用之前写的函数
             new_cv = left_process(tmp_cv, 'up')
             if new_cv not in sink_cv:
                 sink_cv.append(new_cv)
