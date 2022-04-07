@@ -158,6 +158,10 @@ def get_funcname(code):
 def has_cv_fz_right(cv, line):
     if ('=' not in line):
         return False
+    if '"' in line:  # av_log ( s , AV_LOG_WARNING , "par->codec_type is type = [%d]\n" , par -> codec_type )
+        tmp = line.split('"')
+        if len(tmp) > 1 and '=' in tmp[1]:
+            return False
     right = line.split('=')[-1]
     # print('right:', right)
     if (has_cv(cv, right)):
@@ -190,13 +194,16 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
         #     calculation_sink = True
         return_flag = False
         if ('[' in cv):
-            cv_list.append(cv[:(cv.find('['))])  # 先把数组头放进去
+            array_name = cv[:(cv.find('['))]
+            if array_name not in cv_list[epoch]:
+                cv_list[epoch].append(cv[:(cv.find('['))])  # 先把数组头放进去
 
         sp_cv = special_cv_process(cv)  # 特殊变量的处理
         if (len(sp_cv) > 1):
             cv = sp_cv[0]
             for i in range(1, len(sp_cv)):  # 这种是因为提取数组下标提取出了多个变量
-                cv_list.append(sp_cv[i])
+                if sp_cv[1] not in cv_list[epoch]:
+                    cv_list[epoch].append(sp_cv[i])
         else:
             cv = sp_cv[0]
 
@@ -250,6 +257,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
 
                 if '+=' in line:
                     tmp_cv = line.split('+=')[0].strip()
+                if '|=' in line:
+                    tmp_cv = line.split('|=')[0].strip()
                 else:
                     tmp_cv = line.split('=')[0].strip()
                 tmp_cv = left_process(tmp_cv, 'space')  # 对等号左边的变量进行处理(去掉可能存在的类型名等)
