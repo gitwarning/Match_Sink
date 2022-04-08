@@ -3,19 +3,18 @@ import os
 from markupsafe import re
 import ast
 
-from zmq import AFFINITY
 
 from sink_CWE119 import sink_119
 from sink_CWE189 import sink_189
 from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 
-cwe = '772' #匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
-diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-# old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/CVE-2015-6819_CWE-189_84afc6b70d24fc0bf686e43138c96cf60a9445fe_mjpegdec.c_1.1_OLD.c"
-# slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/slices.txt"
+cwe = '119' #匹配的漏洞类型
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
+# diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-4001/CVE-2016-4001_CWE-20_3a15cc0e1ee7168db0782133d2607a6bfa422d66_stellaris_enet.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-4001/slices.txt"
 list_key_words = []  # api函数列表
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed']
@@ -323,8 +322,15 @@ def match_sinks(slices, cwe):
     else:
         cv_list[0] = ast.literal_eval(slices[0][start:(end + 1)])
         loc = slices[0].split(' ')[3]
-        vul_file = slices[0].split(' ')[1].split('_')[3]
+        diff_tmp = slices[0].split(' ')[1].split('_')
+        index = 3
+        vul_file = diff_tmp[3]
+        while ('.c' not in vul_file):
+            index += 1
+            vul_file = vul_file + '_' + diff_tmp[index]  # 漏洞文件名中可能含有下划线
         vul_name = slices[0].split(' ')[2].strip()
+        if (vul_name[0] == '*'):
+            vul_name = vul_name[1:]
     after_diff = []
     # 找到diff修改的位置，将diff修改位置向下的切片加入到after_diff[]
     for line in slices:
