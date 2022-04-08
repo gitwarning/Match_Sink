@@ -13,8 +13,8 @@ cwe = '119' #匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-4001/CVE-2016-4001_CWE-20_3a15cc0e1ee7168db0782133d2607a6bfa422d66_stellaris_enet.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-4001/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2017-6058/CVE-2017-6058_CWE-119_df8bf7a7fe75eb5d5caffa55f5cd4292b757aea6_net_rx_pkt.c_2.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2017-6058/slices.txt"
 diff_file = '' #只在匹配CWE-772类型时使用
 list_key_words = []  # api函数列表
 # 变量类型列表
@@ -300,6 +300,7 @@ def match_sinks(slices, cwe):
     end = slices[0].rfind(']')
     flag_point  = False
     if '@@' in slices[0]:
+        tmp = slices[0].split(' @@ ')[-2]
         cv_list[0] = ast.literal_eval(slices[0].split(' @@ ')[-2])
         cv_list[0] = list(set(cv_list[0]))  # 对cv_list去重
         loc = slices[0].split(' @@ ')[3]
@@ -422,6 +423,9 @@ def find_in_vulfile(tmp_line, cv):
     location = 0
     tmp_file = tmp_line.split(' file: ')[-1].split('/')[-1]
     tmp_loc = tmp_line.split('location: ')[-1].split(' file: ')[0]
+    if not tmp_loc.isnumeric():
+        print("当前行没有location，是：", tmp_loc)
+        return ''
     with open(old_file, 'r') as f:
         vul_content = f.readlines()
     for line in vul_content:
@@ -599,6 +603,8 @@ def main():
         all_content = f.readlines()
         for line in all_content:
             # print(line.strip())
+            if len(line) == 1:  # 去掉空行的情况
+                continue
             slices.append(line.strip())
             if (line.strip() == '------------------------------'):
                 sinks, sink_cv = match_sinks(slices, cwe)
