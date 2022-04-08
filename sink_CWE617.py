@@ -12,11 +12,9 @@ def is_assert(line, cv):
         return True
 
 
-def sink_617(line, cv, sink_results, assert_sink, sink_appended, sink_cv):
+def sink_617(line, cv, sink_results, assert_sink, sink_cv):
     if is_assert(line, cv) and assert_sink:
         print('sink点是调用断言函数：', line)
         sink_results.append(line)
-        if not sink_appended:
-            sink_cv.append(cv)
-            sink_appended = True
+        sink_cv.append(cv)
         assert_sink = False

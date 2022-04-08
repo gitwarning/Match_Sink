@@ -163,6 +163,10 @@ def get_funcname(code):
 def has_cv_fz_right(cv, line):
     if ('=' not in line):
         return False
+    if '"' in line:  # av_log ( s , AV_LOG_WARNING , "par->codec_type is type = [%d]\n" , par -> codec_type )
+        tmp = line.split('"')
+        if len(tmp) > 1 and '=' in tmp[1]:
+            return False
     right = line.split('=')[-1]
     # print('right:', right)
     if (has_cv(cv, right)):
@@ -189,20 +193,22 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
         risk_func_sink = True
         calculation_sink = True
         assert_sink = True
-        sink_appended = False  # 标识该cv是否已经被添加到sink_cv过
         # if cwe == '119':
         #     calculation_sink = False
         # elif cwe == '189':
         #     calculation_sink = True
         return_flag = False
         if ('[' in cv):
-            cv_list.append(cv[:(cv.find('['))])  # 先把数组头放进去
+            array_name = cv[:(cv.find('['))]
+            if array_name not in cv_list[epoch]:
+                cv_list[epoch].append(cv[:(cv.find('['))])  # 先把数组头放进去
 
         sp_cv = special_cv_process(cv)  # 特殊变量的处理
         if (len(sp_cv) > 1):
             cv = sp_cv[0]
             for i in range(1, len(sp_cv)):  # 这种是因为提取数组下标提取出了多个变量
-                cv_list.append(sp_cv[i])
+                if sp_cv[1] not in cv_list[epoch]:
+                    cv_list[epoch].append(sp_cv[i])
         else:
             cv = sp_cv[0]
 
@@ -246,16 +252,18 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
             # 进行sink点匹配
             # 对于不同的漏洞类型进行了封装
             if cwe == '189':
-                sink_189(line, cv, sink_results, array_sink, sink_appended, sink_cv, pointer_sink, risk_func_sink, calculation_sink, point_var)
+                sink_189(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, calculation_sink, point_var)
             elif cwe == '119':
-                sink_119(line, cv, sink_results, array_sink, sink_appended, sink_cv, pointer_sink, risk_func_sink, point_var)
+                sink_119(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, point_var)
             elif cwe == '617':
-                sink_617(line, cv, sink_results, assert_sink, sink_appended, sink_cv)
+                sink_617(line, cv, sink_results, assert_sink, sink_cv)
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
             if has_cv_fz_right(cv, line):
 
                 if '+=' in line:
                     tmp_cv = line.split('+=')[0].strip()
+                if '|=' in line:
+                    tmp_cv = line.split('|=')[0].strip()
                 else:
                     tmp_cv = line.split('=')[0].strip()
                 tmp_cv = left_process(tmp_cv, 'space')  # 对等号左边的变量进行处理(去掉可能存在的类型名等)
@@ -340,7 +348,7 @@ def match_sinks(slices, cwe):
         else:
             find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, '')
         epoch += 1
-
+    sink_cv = list(set(sink_cv))  # 对sink_cv 去重
     return sink_results, sink_cv
 
 
@@ -531,18 +539,6 @@ def match_sources(slices, sink_cv):
 
         # 如果是指针/数组类型，就去掉具体变量，把前面的变量作为cv找；例如s->size变成s
         if (len(source_results) == num):  # 针对该变量没有找到source点(即经过source寻找之后source_results里没有增加新的数据)
-            # if ('->' in cv):
-            #     index = cv.rfind('->')
-            #     new_cv = cv[:index].strip()
-            #     print(new_cv, '===============')
-            #     cvs.append(new_cv)
-            # if ('.' in cv):
-            #     cvs.append(cv[:(cv.rfind('.'))].strip())
-            # if (('[' in cv) and (']' in cv)):  # a[index][s]
-            #     index = cv.rfind('[')
-            #     new_cv = cv[:index].strip()
-            #     cvs.append(new_cv)
-            #  TODO 可以直接用之前写的函数
             new_cv = left_process(tmp_cv, 'up')
             if new_cv not in sink_cv:
                 sink_cv.append(new_cv)
