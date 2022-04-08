@@ -499,6 +499,9 @@ def match_sources(slices, sink_cv):
                 continue
             else:
                 line_cvs = res_tmp[0].strip().split(',')  # 可能存在多个变量被赋值,例如a, b = recv()
+                # 如果等号左边是变量声明的情况 stellaris_enet_state * s = qemu_get_nic_opaque ( nc )
+                if len(line_cvs[0].split(" ")) > 1:
+                    line_cvs[0] = left_process(line_cvs[0], 'space')
                 if (cv in line_cvs):
                     fucnname = get_funcname(line)
                     if fucnname:  # 如果是外部函数
