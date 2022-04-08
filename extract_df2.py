@@ -1,8 +1,5 @@
 ## coding:utf-8
 
-from cgi import test
-from cmath import pi
-from hashlib import new
 import re
 from joern.all import JoernSteps
 from igraph import *
@@ -885,10 +882,6 @@ if __name__ == "__main__":
                         print(func_name)
                         print(file_name)
                         print(line)
-                        cv_name = cv_path + '/cv_' + file_name.split('_')[2] + '.txt'
-                        cv_file = open(cv_name, 'w+')
-                        print >> cv_file, cv
-                        
                         startnode = get_startnode_sche(j, func_name, file_name, line, cv)
                         print("startnode: ")
                         print(startnode)
@@ -976,8 +969,9 @@ if __name__ == "__main__":
                         for var in var_list: #var_list:这一行涉及到的关键变量
                             print('CV: ', var)
                             idenfitierDecl, successors, variable_name = backward_to_decl(j, list_startnode[0], var)
-                            print("This cv's declaration line:   " + idenfitierDecl[0]['location'])
-                            print("This cv's declaration code:   " + idenfitierDecl[0]['code'])
+                            if(idenfitierDecl != []):
+                                print("This cv's declaration line:   " + idenfitierDecl[0]['location'])
+                                print("This cv's declaration code:   " + idenfitierDecl[0]['code'])
                             for idc in idenfitierDecl:
                                 list_startnode_tmp.append(idc)
                     
@@ -1039,7 +1033,137 @@ if __name__ == "__main__":
         # 针对add型的文件 进行对比删除
         # 只是个对比作用 不需要joern中的解析
         '''
+        2022.4.7修改:通过对diff文件的解析找出修改的行号，直接在slices_add.txt中替换行号
+        '''
+        if(flag == 1):#说明不是只增类型的diff
+            continue
+        f_add = open(store_filepath1, 'a+')#即将被写入的文件
+        f = open(store_filepath, 'r')
+        slice_content = f.readlines()#读取切片文件slices_add.txt
+        f2 = open(this_diff_path, 'r')
+        print(this_diff_path)
+        diff_content = f2.readlines()#读取diff文件,识别加号行
+        vuln_path = old_path + cve_num + '/' + diff_name + '_OLD.c'
+        f3 = open(vuln_path, 'r')
+        vuln_content = f3.readlines()#读取漏洞文件,匹配行号
+
+        add_num = 0
+        every_num = 0
+        diff_message = {}
+        valid_message = False
+        
+        for line in diff_content:
+            line = line.strip()
+            if(line[:2] == '@@'):
+                valid_message = True
+                after_add_del = False
+                add_line_tmp = re.findall('@@(.*?)@@', line)[0].strip()
+                start_num = re.findall('\+(.*?),', add_line_tmp)[0].strip()#start_num
+                
+                medium_num = -1
+
+            if(valid_message == False):
+                continue
+
+            if(line != '' and line[0] == '-'):
+                after_add_del = True
+                add_num -= 1
+                every_num -= 1
+
+            if(line != '' and line[0] == '+'):
+                after_add_del = True
+                add_num += 1
+                every_num += 1
+            
+            if(after_add_del and line[0] != '+' and line[0] != '-'):#视为一个加减块结束
+                valid_message = False
+                medium_num -= (every_num + 1)
+                diff_message.setdefault(start_num, []).append([medium_num, add_num])
+                every_num = 0
+            
+            medium_num += 1
+        
+        print(diff_message)
+        
+        min_start = 99999999
+        for start_line in diff_message.keys():
+            min_start = min(int(start_line), min_start)
+        
+        kvar = slice_content[0].split(' @@ ')[3]#获取关注点的行号
+        flag = False #记录key_var line有没有出现
+        for slice_line in slice_content:
+            if(slice_line == slice_content[0]):
+                slice_line = slice_line.replace('_NEW.c', '_OLD.c')
+            if(slice_line.strip()[-2:] != '.c'):#可能是开始行、以逗号结尾的函数定义行、切片之间的分割行等
+                f_add.write(slice_line)
+                continue
+            print('yes')
+            diff_tmp = diff_name.split('_')
+            index = 3
+            vuln_file = diff_tmp[3]
+            while('.c' not in vuln_file):
+                index += 1
+                vuln_file  = vuln_file + '_' + diff_tmp[index]
+
+            this_file = slice_line.split(' file: ')[-1].split('/')[-1] #获取当前行的文件名
+            this_code = slice_line.split(' location: ')[0] #获取当前行的代码片段
+            this_loc = slice_line.split(' location: ')[-1].split(' file: ')[0].strip() #获取当前行的行号
+            is_add_line = False
+            print(vuln_file, this_file.strip())
+            print(this_loc, min_start)
+                        
+            if(vuln_file == this_file.strip()):#如果这一行是漏洞文件里的，需要改一下行号
+                print('yes')
+                if(kvar == this_loc):
+                    flag = True
+                if(int(this_loc) < min_start):
+                    new_line = slice_line
+                    # f_add.writ(slice_line + '\n')
+                else:
+                    num_fin = 0
+                    sign = False
+                    print('ok')
+                    for start_line in diff_message.keys():
+                        num_list = diff_message[start_line]
+                        for one_list in num_list:
+                            medium_tmp = one_list[0]
+                            add_tmp = one_list[1]
+                            if(int(this_loc) == 1907):
+                                print(start_line, medium_tmp, add_tmp)
+                            if(int(this_loc) > (int(start_line) + medium_tmp + add_tmp)):
+                                num_fin = add_tmp
+                            elif(int(this_loc) >= (int(start_line) + medium_tmp)):
+                                is_add_line = True
+                                sign = True
+                                break
+                        if(sign):
+                            break
+                                
+                    print(num_fin)
+                    
+                    if(is_add_line):#如果是加号行就跳过
+                        flag = True
+                        print(slice_line)
+                        continue
+                    new_loc = int(this_loc) - num_fin
+                    if(flag):
+                        new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file + '    (key_var lines)'
+                        flag = False
+                    else:
+                        new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file
+            else:
+                if(flag == True):#已经经过过了关键变量行
+                    new_line = this_code + ' location: ' + str(this_loc) + ' file: ' + this_file + '    (key_var lines)'
+                    flag = False
+                else:
+                    new_line = slice_line
+            f_add.write(new_line)
+
+
+
+        '''
         2022.3.29修改:从slices.txt中识别出diff里的加号行，直接对这些行删除
+        '''
         '''
         
         if(flag == 1):#说明不是只增类型的diff
@@ -1105,62 +1229,4 @@ if __name__ == "__main__":
                     new_line = slice_line + '\n'
             
             f_add.write(new_line)
-
-
-            
         '''
-        # add_filepath = './results/slices_add.txt'
-        if(flag == 1):
-            continue
-        f_add = open(store_filepath1, 'a+')
-        #vuln_path = '../code/C-Vulnerable_Files/ffmpeg/CVE-2011-3504/CVE-2011-3504_CWE-094_4f07a3aa2c6b7356c28646692261aa9080605fcc_matroskadec.c_3.1_OLD.c'
-        vuln_path = old_path + cve_num + '/' + diff_name + '_OLD.c'
-
-        vuln_file = '' #漏洞所在的源文件名
-        for i in res_filname:
-            if(i in vuln_path):
-                vuln_file = i
-                break
-
-        f = open(store_filepath, 'r')
-        slice_content = f.readlines()
-        f2 = open(vuln_path, 'r')
-        vuln_content = f2.readlines()
-
-        start = 1#初始值标记为1 因为第一行就是起始标记行
-        vul_func = slice_content[1].strip().split(' location: ')[0]#获取函数定义处的代码片段
-        for line in slice_content:
-            line = line.strip()
-            if(start == 1):
-                kvar = line.split(' ')[3] #获取起始点行数
-                sign = 0
-                f_add.write(line + '\n')
-                start = 0
-            elif(line == '------------------------------'):
-                start = 1
-                f_add.write('------------------------------\n')
-            elif(line[-2:] == '.c'):
-                slice_file = line.split(' file: ')[-1].split('/')[-1]
-                code = line.split(' location: ')[0] #获取代码片段
-                loc = line.split('location: ')[-1].split(' file: ')[0] #获取当前行的行号
-                if(vuln_file == slice_file):
-                    location = find_code_in_vuln(code, vuln_content, vul_func) #找到在漏洞函数中是第几行
-                    if(location > 0):
-                        if(sign == 1):
-                            f_add.write(code + ' location: ' + str(location) + ' file: ' + slice_file + '    (key_var lines)' + '\n')
-                            sign = 0 #已经找到了关键变量行
-                        else:
-                            f_add.write(code + ' location: ' + str(location) + ' file: ' + slice_file + '\n')
-                else:
-                    if(sign == 1):#如果已经到了别的文件，但仍然没有到关键变量行,那就把第一个别的文件行设置为关键变量行
-                        f_add.write(code + ' location: ' + str(loc) + ' file: ' + slice_file + '    (key_var lines)' + '\n')
-                        sign = 0
-                    else:
-                        f_add.write(line + '\n')
-                    
-                if(loc == kvar):
-                    sign = 1
-            elif(line[-1] == ','):
-                f_add.write(line + '\n')
-        '''
-
