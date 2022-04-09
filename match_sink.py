@@ -114,35 +114,64 @@ def get_min(sp1, sp2, sp3):  # 感觉处理的好繁琐,之后找一个更加简
 
 def left_process(cv, sign):  # 对左边的特殊变量进行空格处理
     flag = ''
-    if (' ' in cv):
-        sp1 = cv.find('->')
-        sp2 = cv.find('.')
-        sp3 = cv.find('[')
-        # print(sp1, sp2, sp3)
-        flag = get_min(sp1, sp2, sp3)
+    # if (' ' in cv):
+    #     sp1 = cv.find('->')
+    #     sp2 = cv.find('.')
+    #     sp3 = cv.find('[')
+    #     # print(sp1, sp2, sp3)
+    #     flag = get_min(sp1, sp2, sp3)
+    #     print(flag, cv, sign)
 
-        if (flag == 'sp1'):
-            tmp_cv = cv[:sp1].strip().split(' ')[-1]
-            if (sign == 'up'):
-                return tmp_cv
-            else:
-                return (tmp_cv + cv[sp1:]).replace(' ', '')
-        if (flag == 'sp2'):
-            tmp_cv = cv[:sp2].strip().split(' ')[-1]
-            if (sign == 'up'):
-                return tmp_cv
-            else:
-                return (tmp_cv + cv[sp2:]).replace(' ', '')
-        if (flag == 'sp3'):
-            tmp_cv = cv[:sp3].strip().split(' ')[-1]
-            if (sign == 'up'):
-                return tmp_cv
-            else:
-                return (tmp_cv + cv[sp3:]).replace(' ', '')
+    #     if (flag == 'sp1'):
+    #         tmp_cv = cv[:sp1].strip().split(' ')[-1]
+    #         if (sign == 'up'):
+    #             return tmp_cv
+    #         else:
+    #             return (tmp_cv + cv[sp1:]).replace(' ', '')
+    #     if (flag == 'sp2'):
+    #         tmp_cv = cv[:sp2].strip().split(' ')[-1]
+    #         if (sign == 'up'):
+    #             return tmp_cv
+    #         else:
+    #             return (tmp_cv + cv[sp2:]).replace(' ', '')
+    #     if (flag == 'sp3'):
+    #         tmp_cv = cv[:sp3].strip().split(' ')[-1]
+    #         if (sign == 'up'):
+    #             return tmp_cv
+    #         else:
+    #             return (tmp_cv + cv[sp3:]).replace(' ', '')
 
-        return cv.split(' ')[-1]
-    else:
-        return cv
+    #     return cv.split(' ')[-1]
+    # else:
+    #     return cv
+
+    # 不确定这样改了之后会不会有其他问题（目前好像没发现）
+    sp1 = cv.find('->')
+    sp2 = cv.find('.')
+    sp3 = cv.find('[')
+    # print(sp1, sp2, sp3)
+    flag = get_min(sp1, sp2, sp3)
+
+    if (flag == 'sp1'):
+        tmp_cv = cv[:sp1].strip().split(' ')[-1]
+        if (sign == 'up'):
+            return tmp_cv
+        else:
+            return (tmp_cv + cv[sp1:]).replace(' ', '')
+    if (flag == 'sp2'):
+        tmp_cv = cv[:sp2].strip().split(' ')[-1]
+        if (sign == 'up'):
+            return tmp_cv
+        else:
+            return (tmp_cv + cv[sp2:]).replace(' ', '')
+    if (flag == 'sp3'):
+        tmp_cv = cv[:sp3].strip().split(' ')[-1]
+        if (sign == 'up'):
+            return tmp_cv
+        else:
+            return (tmp_cv + cv[sp3:]).replace(' ', '')
+
+    return cv.split(' ')[-1]
 
 
 def get_funcname(code):
