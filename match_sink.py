@@ -10,9 +10,9 @@ from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 
 cwe = '772' #匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/ImageMagick/CVE-2018-16640/CVE-2018-16640_CWE-772_76efa969342568841ecf320b5a041685a6d24e0b_png.c_1.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/ImageMagick/CVE-2018-16640/slices_add.txt'
-diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/ImageMagick/CVE-2018-16640/CVE-2018-16640_CWE-772_76efa969342568841ecf320b5a041685a6d24e0b_png.c_1.1.diff'
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/qemu/CVE-2016-7466/CVE-2016-7466_CWE-399_b53dd4495ced2432a0b652ea895e651d07336f7e_hcd-xhci.c_1.1_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/qemu/CVE-2016-7466/slices.txt'
+diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/qemu/CVE-2016-7466/CVE-2016-7466_CWE-399_b53dd4495ced2432a0b652ea895e651d07336f7e_hcd-xhci.c_1.1.diff'
 # old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/CVE-2015-6819_CWE-189_84afc6b70d24fc0bf686e43138c96cf60a9445fe_mjpegdec.c_1.1_OLD.c"
 # slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/slices.txt"
 list_key_words = []  # api函数列表
@@ -41,6 +41,8 @@ def is_funcdefine(line):
 def special_cv_process(cv):
     if (cv[0] == '*'):
         # return cv[1:]
+        cv = [cv[1:]]
+    if (cv[0] == '&'):
         cv = [cv[1:]]
     # if('[' in cv):#关键变量是一个下标含有内容的数组
     # cv = cv[:(cv.find('['))]
@@ -206,7 +208,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
         if (len(sp_cv) > 1):
             cv = sp_cv[0]
             for i in range(1, len(sp_cv)):  # 这种是因为提取数组下标提取出了多个变量
-                if sp_cv[1] not in cv_list[epoch]:
+                if sp_cv[i] not in cv_list[epoch]:
                     cv_list[epoch].append(sp_cv[i])
         else:
             cv = sp_cv[0]
@@ -347,7 +349,16 @@ def match_sinks(slices, cwe):
 
     if cwe == '772':
         sink_772(old_file, sink_results, diff_file, loc)
-        return sink_results, cv_list[0]
+        for tmp_cv in cv_list[0]:
+            sink_cv_tmp = special_cv_process(tmp_cv)
+            if(len(sink_cv_tmp) > 1):
+                for i in range(1, len(sink_cv_tmp)):
+                    if sink_cv_tmp[i] not in sink_cv:
+                        sink_cv.append(sink_cv_tmp[i])
+
+            sink_cv.append(sink_cv_tmp[0])
+        print(sink_cv)
+        return sink_results, sink_cv
 
     while len(sink_results) == 0 and epoch < 5:
         if flag_point:
