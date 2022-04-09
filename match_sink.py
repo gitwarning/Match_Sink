@@ -3,7 +3,6 @@ import os
 from markupsafe import re
 import ast
 
-from zmq import AFFINITY
 
 from sink_CWE119 import sink_119
 from sink_CWE189 import sink_189
@@ -300,6 +299,7 @@ def match_sinks(slices, cwe):
     end = slices[0].rfind(']')
     flag_point  = False
     if '@@' in slices[0]:
+        tmp = slices[0].split(' @@ ')[-2]
         cv_list[0] = ast.literal_eval(slices[0].split(' @@ ')[-2])
         cv_list[0] = list(set(cv_list[0]))  # 对cv_list去重
         loc = slices[0].split(' @@ ')[3]
@@ -323,8 +323,15 @@ def match_sinks(slices, cwe):
     else:
         cv_list[0] = ast.literal_eval(slices[0][start:(end + 1)])
         loc = slices[0].split(' ')[3]
-        vul_file = slices[0].split(' ')[1].split('_')[3]
+        diff_tmp = slices[0].split(' ')[1].split('_')
+        index = 3
+        vul_file = diff_tmp[3]
+        while ('.c' not in vul_file):
+            index += 1
+            vul_file = vul_file + '_' + diff_tmp[index]  # 漏洞文件名中可能含有下划线
         vul_name = slices[0].split(' ')[2].strip()
+        if (vul_name[0] == '*'):
+            vul_name = vul_name[1:]
     after_diff = []
     # 找到diff修改的位置，将diff修改位置向下的切片加入到after_diff[]
     for line in slices:
@@ -415,6 +422,9 @@ def find_in_vulfile(tmp_line, cv):
     location = 0
     tmp_file = tmp_line.split(' file: ')[-1].split('/')[-1]
     tmp_loc = tmp_line.split('location: ')[-1].split(' file: ')[0]
+    if not tmp_loc.isnumeric():
+        print("当前行没有location，是：", tmp_loc)
+        return ''
     with open(old_file, 'r') as f:
         vul_content = f.readlines()
     for line in vul_content:
@@ -493,6 +503,9 @@ def match_sources(slices, sink_cv):
                 continue
             else:
                 line_cvs = res_tmp[0].strip().split(',')  # 可能存在多个变量被赋值,例如a, b = recv()
+                # 如果等号左边是变量声明的情况 stellaris_enet_state * s = qemu_get_nic_opaque ( nc )
+                if len(line_cvs[0].split(" ")) > 1:
+                    line_cvs[0] = left_process(line_cvs[0], 'space')
                 if (cv in line_cvs):
                     fucnname = get_funcname(line)
                     if fucnname:  # 如果是外部函数
@@ -592,6 +605,8 @@ def main():
         all_content = f.readlines()
         for line in all_content:
             # print(line.strip())
+            if len(line) == 1:  # 去掉空行的情况
+                continue
             slices.append(line.strip())
             if (line.strip() == '------------------------------'):
                 sinks, sink_cv = match_sinks(slices, cwe)
