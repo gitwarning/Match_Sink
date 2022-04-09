@@ -1,6 +1,10 @@
 ## coding:utf-8
 
+from cgi import test
+from cmath import pi
+from hashlib import new
 import re
+import this
 from joern.all import JoernSteps
 from igraph import *
 from access_db_operate import *
@@ -882,6 +886,10 @@ if __name__ == "__main__":
                         print(func_name)
                         print(file_name)
                         print(line)
+                        cv_name = cv_path + '/cv_' + file_name.split('_')[2] + '.txt'
+                        cv_file = open(cv_name, 'w+')
+                        print >> cv_file, cv
+                        
                         startnode = get_startnode_sche(j, func_name, file_name, line, cv)
                         print("startnode: ")
                         print(startnode)
@@ -1075,10 +1083,16 @@ if __name__ == "__main__":
                 add_num += 1
                 every_num += 1
             
-            if(after_add_del and line[0] != '+' and line[0] != '-'):#视为一个加减块结束
-                valid_message = False
+            if(after_add_del and line != '' and line[0] != '+' and line[0] != '-'):#视为一个加减块结束
+                # valid_message = False
+                after_add_del = False
                 medium_num -= (every_num + 1)
-                diff_message.setdefault(start_num, []).append([medium_num, add_num])
+
+                diff_message[start_num] = [medium_num, add_num]
+
+                start_num_tmp = int(start_num) + (medium_num + add_num) #新的加减块的开始位置
+                start_num = str(start_num_tmp)
+                # diff_message.setdefault(start_num, []).append([medium_num, add_num])
                 every_num = 0
             
             medium_num += 1
@@ -1113,7 +1127,7 @@ if __name__ == "__main__":
             print(this_loc, min_start)
                         
             if(vuln_file == this_file.strip()):#如果这一行是漏洞文件里的，需要改一下行号
-                print('yes')
+                print('yes')                    
                 if(kvar == this_loc):
                     flag = True
                 if(int(this_loc) < min_start):
@@ -1125,35 +1139,33 @@ if __name__ == "__main__":
                     print('ok')
                     for start_line in diff_message.keys():
                         num_list = diff_message[start_line]
-                        for one_list in num_list:
-                            medium_tmp = one_list[0]
-                            add_tmp = one_list[1]
-                            if(int(this_loc) == 1907):
-                                print(start_line, medium_tmp, add_tmp)
-                            if(int(this_loc) > (int(start_line) + medium_tmp + add_tmp)):
-                                num_fin = add_tmp
-                            elif(int(this_loc) >= (int(start_line) + medium_tmp)):
-                                is_add_line = True
-                                sign = True
-                                break
-                        if(sign):
+                        medium_tmp = num_list[0]
+                        add_tmp = num_list[1]
+
+                        if(int(this_loc) > (int(start_line) + medium_tmp + add_tmp + 1)):
+                            num_fin = add_tmp
+                        elif(int(this_loc) >= (int(start_line) + medium_tmp)):
+                            is_add_line = True
+                            sign = True
                             break
                                 
                     print(num_fin)
-                    
                     if(is_add_line):#如果是加号行就跳过
-                        flag = True
-                        print(slice_line)
+                        # flag = True
+                        # print(slice_line)
+                        # print(flag, '-----')
                         continue
                     new_loc = int(this_loc) - num_fin
+                    print(flag)
                     if(flag):
-                        new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file + '    (key_var lines)'
+                        print(slice_line) 
+                        new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file.strip() + '    (key_var lines)\n'
                         flag = False
                     else:
                         new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file
             else:
-                if(flag == True):#已经经过过了关键变量行
-                    new_line = this_code + ' location: ' + str(this_loc) + ' file: ' + this_file + '    (key_var lines)'
+                if(flag == True):
+                    new_line = this_code + ' location: ' + str(this_loc) + ' file: ' + this_file.strip() + '    (key_var lines)\n'
                     flag = False
                 else:
                     new_line = slice_line

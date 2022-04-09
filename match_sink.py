@@ -43,6 +43,8 @@ def special_cv_process(cv):
     if (cv[0] == '*'):
         # return cv[1:]
         cv = [cv[1:]]
+    if (cv[0] == '&'):
+        cv = [cv[1:]]
     # if('[' in cv):#关键变量是一个下标含有内容的数组
     # cv = cv[:(cv.find('['))]
     # return cv
@@ -113,31 +115,62 @@ def get_min(sp1, sp2, sp3):  # 感觉处理的好繁琐,之后找一个更加简
 
 def left_process(cv, sign):  # 对左边的特殊变量进行空格处理
     flag = ''
-    if (' ' in cv):
-        sp1 = cv.find('->')
-        sp2 = cv.find('.')
-        sp3 = cv.find('[')
-        # print(sp1, sp2, sp3)
-        flag = get_min(sp1, sp2, sp3)
+    # if (' ' in cv):
+    #     sp1 = cv.find('->')
+    #     sp2 = cv.find('.')
+    #     sp3 = cv.find('[')
+    #     # print(sp1, sp2, sp3)
+    #     flag = get_min(sp1, sp2, sp3)
+    #     print(flag, cv, sign)
 
-        if (flag == 'sp1'):
-            tmp_cv = cv[:sp1].strip().split(' ')[-1]
-            if (sign == 'up'):
-                return tmp_cv
-            else:
-                return (tmp_cv + cv[sp1:]).replace(' ', '')
-        if (flag == 'sp2'):
-            tmp_cv = cv[:sp2].strip().split(' ')[-1]
-            if (sign == 'up'):
-                return tmp_cv
-            else:
-                return (tmp_cv + cv[sp2:]).replace(' ', '')
-        if (flag == 'sp3'):
-            tmp_cv = cv[:sp3].strip().split(' ')[-1]
-            if (sign == 'up'):
-                return tmp_cv
-            else:
-                return (tmp_cv + cv[sp3:]).replace(' ', '')
+    #     if (flag == 'sp1'):
+    #         tmp_cv = cv[:sp1].strip().split(' ')[-1]
+    #         if (sign == 'up'):
+    #             return tmp_cv
+    #         else:
+    #             return (tmp_cv + cv[sp1:]).replace(' ', '')
+    #     if (flag == 'sp2'):
+    #         tmp_cv = cv[:sp2].strip().split(' ')[-1]
+    #         if (sign == 'up'):
+    #             return tmp_cv
+    #         else:
+    #             return (tmp_cv + cv[sp2:]).replace(' ', '')
+    #     if (flag == 'sp3'):
+    #         tmp_cv = cv[:sp3].strip().split(' ')[-1]
+    #         if (sign == 'up'):
+    #             return tmp_cv
+    #         else:
+    #             return (tmp_cv + cv[sp3:]).replace(' ', '')
+
+    #     return cv.split(' ')[-1]
+    # else:
+    #     return cv
+
+    # 不确定这样改了之后会不会有其他问题（目前好像没发现）
+    sp1 = cv.find('->')
+    sp2 = cv.find('.')
+    sp3 = cv.find('[')
+    # print(sp1, sp2, sp3)
+    flag = get_min(sp1, sp2, sp3)
+
+    if (flag == 'sp1'):
+        tmp_cv = cv[:sp1].strip().split(' ')[-1]
+        if (sign == 'up'):
+            return tmp_cv
+        else:
+            return (tmp_cv + cv[sp1:]).replace(' ', '')
+    if (flag == 'sp2'):
+        tmp_cv = cv[:sp2].strip().split(' ')[-1]
+        if (sign == 'up'):
+            return tmp_cv
+        else:
+            return (tmp_cv + cv[sp2:]).replace(' ', '')
+    if (flag == 'sp3'):
+        tmp_cv = cv[:sp3].strip().split(' ')[-1]
+        if (sign == 'up'):
+            return tmp_cv
+        else:
+            return (tmp_cv + cv[sp3:]).replace(' ', '')
 
         return cv.split(' ')[-1]
     else:
@@ -207,7 +240,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
         if (len(sp_cv) > 1):
             cv = sp_cv[0]
             for i in range(1, len(sp_cv)):  # 这种是因为提取数组下标提取出了多个变量
-                if sp_cv[1] not in cv_list[epoch]:
+                if sp_cv[i] not in cv_list[epoch]:
                     cv_list[epoch].append(sp_cv[i])
         else:
             cv = sp_cv[0]
@@ -348,7 +381,16 @@ def match_sinks(slices, cwe):
 
     if cwe == '772':
         sink_772(old_file, sink_results, diff_file, loc)
-        return sink_results, cv_list[0]
+        for tmp_cv in cv_list[0]:
+            sink_cv_tmp = special_cv_process(tmp_cv)
+            if(len(sink_cv_tmp) > 1):
+                for i in range(1, len(sink_cv_tmp)):
+                    if sink_cv_tmp[i] not in sink_cv:
+                        sink_cv.append(sink_cv_tmp[i])
+
+            sink_cv.append(sink_cv_tmp[0])
+        print(sink_cv)
+        return sink_results, sink_cv
 
     while len(sink_cv) == 0 and cv_list[epoch] and epoch < 5:
         if flag_point:
@@ -561,9 +603,11 @@ def match_sources(slices, sink_cv):
         tmp_line = ''
         for line in source_lines:
             # 在找source点时如果当前行是对cv的成员赋值，不可以将此视为cv的赋值
-            if has_only_cv(line, tmp_cv) and not has_cv_fz_left(tmp_cv, line):  # 如果含有关键变量但不含等号赋值
+            # #不能把切片的第一行信息行作为source点（尽管它可能含有cv）
+            if has_only_cv(line, tmp_cv) and not has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 如果含有关键变量但不含等号赋值
                 tmp_line = line  # 先暂存当前语句，然后继续向上找
-            if has_only_cv(line, tmp_cv) and has_cv_fz_left(tmp_cv, line):  # 含有等号的赋值
+                print('暂存的语句是: ', tmp_line)
+            if has_only_cv(line, tmp_cv) and has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 含有等号的赋值
                 #( avctx -> width * avctx -> bits_per_coded_sample + 7 ) / 8  的值赋值给了CV tmp_cv可能是一个表达式，如何区分出来
                 tmp_cv = re.split('[,;]', line.split(' = ')[-1])[0]  # 取出等号右边的变量，把谁的值赋给了CV，CV=b，继续向上跟踪b
                 if is_expression(tmp_cv):
@@ -573,6 +617,7 @@ def match_sources(slices, sink_cv):
                 else:
                     tmp_line = line
                     print(tmp_cv, '的值赋值给了CV')
+                    print('暂存的语句2是: ', tmp_line)
         if flag == 2:
             print("CV是由多个变量共同确定，将此行定位source点：", line)
             continue
