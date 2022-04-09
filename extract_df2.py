@@ -977,8 +977,9 @@ if __name__ == "__main__":
                         for var in var_list: #var_list:这一行涉及到的关键变量
                             print('CV: ', var)
                             idenfitierDecl, successors, variable_name = backward_to_decl(j, list_startnode[0], var)
-                            print("This cv's declaration line:   " + idenfitierDecl[0]['location'])
-                            print("This cv's declaration code:   " + idenfitierDecl[0]['code'])
+                            if(idenfitierDecl != []):
+                                print("This cv's declaration line:   " + idenfitierDecl[0]['location'])
+                                print("This cv's declaration code:   " + idenfitierDecl[0]['code'])
                             for idc in idenfitierDecl:
                                 list_startnode_tmp.append(idc)
                     
@@ -1082,7 +1083,7 @@ if __name__ == "__main__":
                 add_num += 1
                 every_num += 1
             
-            if(after_add_del and line[0] != '+' and line[0] != '-'):#视为一个加减块结束
+            if(after_add_del and line != '' and line[0] != '+' and line[0] != '-'):#视为一个加减块结束
                 # valid_message = False
                 after_add_del = False
                 medium_num -= (every_num + 1)

@@ -31,7 +31,7 @@ def get_diff_message(diff_content):
             add_num += 1
             every_num += 1
         
-        if(after_add_del and line != '' and line[0] != '+' and line[0] != '-'):#视为一个加减块结束
+        if(after_add_del and line != '' and line != '' and line[0] != '+' and line[0] != '-'):#视为一个加减块结束
             after_add_del = False
             medium_num -= (every_num + 1)
             diff_message[start_num] = [medium_num, add_num]
