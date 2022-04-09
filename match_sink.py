@@ -9,12 +9,12 @@ from sink_CWE189 import sink_189
 from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 
-cwe = '119' #匹配的漏洞类型
+cwe = '189' #匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2017-6058/CVE-2017-6058_CWE-119_df8bf7a7fe75eb5d5caffa55f5cd4292b757aea6_net_rx_pkt.c_2.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2017-6058/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-2538/CVE-2016-2538_CWE-189_fe3c546c5ff2a6210f9a4d8561cc64051ca8603e_dev-network.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-2538/slices.txt"
 diff_file = '' #只在匹配CWE-772类型时使用
 list_key_words = []  # api函数列表
 # 变量类型列表
@@ -350,14 +350,14 @@ def match_sinks(slices, cwe):
         sink_772(old_file, sink_results, diff_file, loc)
         return sink_results, cv_list[0]
 
-    while len(sink_results) == 0 and epoch < 5:
+    while len(sink_cv) == 0 and cv_list[epoch] and epoch < 5:
         if flag_point:
             find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, point_vars)
         else:
             find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, '')
         epoch += 1
     sink_cv = list(set(sink_cv))  # 对sink_cv 去重
-    return sink_results, sink_cv
+    return sink_results, sink_cv, cv_list
 
 
 def has_cv(cv, line):
@@ -462,10 +462,38 @@ def match_sources(slices, sink_cv):
     source_results = []
     source_lines = []
 
-    vul_function = slices[0].strip().split(' ')[2]
-    # print(vul_function)
-    loc = slices[0].split(' ')[3].strip()
     vulf_define = ''
+    if '@@' in slices[0]:
+        # tmp = slices[0].split(' @@ ')[-2]
+        loc = slices[0].split(' @@ ')[3]
+        diff_tmp = slices[0].split(' @@ ')[1].split('_')
+        index = 3
+        vul_file = diff_tmp[3]
+        while('.c' not in vul_file):
+            index += 1
+            vul_file  = vul_file + '_' + diff_tmp[index] #漏洞文件名中可能含有下划线
+        vul_function = slices[0].split(' @@ ')[2].strip()
+        if (vul_function[0] == '*'):
+            vul_name = vul_function[1:]
+        flag_point = True
+    #point_vars = [] # 存放漏洞函数中有的指针变量
+    # 切片里用空格作为每种信息的分割不妥，之后用一个不会在代码中出现的符号(比如 @@ )进行分割，就可以直接用split函数了，但这样切片文件要全部更新
+    # FIX
+    # s = slices[0].find('{')
+    # e = slices[0].rfind('}')
+    # point_vars = slices[0][(s + 1):e].split(', ')
+        point_vars = slices[0].split(' @@ ')[-1].replace('{', '').replace('}', '').split(', ') #将指针变量信息转换成列表
+    else:
+        loc = slices[0].split(' ')[3]
+        diff_tmp = slices[0].split(' ')[1].split('_')
+        index = 3
+        vul_file = diff_tmp[3]
+        while ('.c' not in vul_file):
+            index += 1
+            vul_file = vul_file + '_' + diff_tmp[index]  # 漏洞文件名中可能含有下划线
+        vul_function = slices[0].split(' ')[2].strip()
+        if (vul_function[0] == '*'):
+            vul_name = vul_function[1:]
     # print(vul_function)
     # print(slices[1])
 
@@ -607,9 +635,11 @@ def main():
                 continue
             slices.append(line.strip())
             if (line.strip() == '------------------------------'):
-                sinks, sink_cv = match_sinks(slices, cwe)
+                sinks, sink_cv, cv_list = match_sinks(slices, cwe)
                 print('.......................sink is over.......................')
                 sources = match_sources(slices, sink_cv)  # 考虑根据sink点来匹配source点
+                if sink_cv and not sources:  # 如果匹配到sink点但是没有匹配到source点，考虑使用最开始的CV来匹配source点
+                    sources = match_sources(slices, cv_list[0])
                 print('.......................source is over.......................')
                 # print(slices)
                 slices = []
