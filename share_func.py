@@ -24,7 +24,7 @@ def is_risk_func(line, cv):
         return True
     elif ('copy' in line):
         return True
-    elif ('recv' in line):
+    elif ('recv' in line and 'recv ->' not in line):
         return True
     else:
         return False
@@ -102,6 +102,8 @@ def is_calculation(line, cv):
     if (cv + ' *') in line and '=' in line:  # 要有等号才算是整数溢出吗？
         return True
     if ('* ' + cv) in line and '=' in line:
+        if '*' == line[0]:
+            return False
         return True
     if (cv + ' +') in line:
         return True
@@ -110,5 +112,7 @@ def is_calculation(line, cv):
     if (cv + ' -') in line and (cv + ' ->') not in line:
         return True
     if ('- ' + cv) in line:
+        return True
+    if (cv + ' =') in line and '+' in line:
         return True
     return False

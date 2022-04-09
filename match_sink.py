@@ -9,12 +9,12 @@ from sink_CWE189 import sink_189
 from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 
-cwe = '189' #匹配的漏洞类型
+cwe = '119' #匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-6888/CVE-2016-6888_CWE-190_47882fa4975bf0b58dd74474329fdd7154e8f04c_net_tx_pkt.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-6888/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2015-8666/CVE-2015-8666_CWE-119_d9a3b33d2c9f996537b7f1d0246dee2d0120cefb_core.c_4.0_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2015-8666/slices.txt"
 diff_file = '' #只在匹配CWE-772类型时使用
 list_key_words = []  # api函数列表
 # 变量类型列表
@@ -219,6 +219,7 @@ def is_return_cv(line, cv):
         return False
 
 def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, point_var):
+    calculation_sinks = []  # 临时存放可能整数溢出行
     # 对于每一个cv都去匹配sink点
     for cv in cv_list[epoch]:
         array_sink = True
@@ -254,7 +255,16 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
             if is_funcdefine(line):
                 # 函数定义的上一行不一定是该函数的函数调用行,先判断上一行是否是函数调用行（函数名）获取上一行的信息，
                 # 判断cv是否在函数调用语句的参数中，如果在就记录下来cv的位置（第几个参数）
-                func_name = get_funcname(line)[0]
+                # 函数定义可能出现跨行的现象
+                func_define = line
+                if 'location' not in line:
+                    func_define = ''
+                    num = 0
+                    while 'location' not in after_diff[i+num]:
+                        func_define += after_diff[i+num]
+                        num += 1  # 函数定义跨的行数
+                    func_define += after_diff[i+num]
+                func_name = get_funcname(func_define)[0]
                 if func_name in after_diff[i - 1]:
                     tmp = after_diff[i - 1]
                     tmp = tmp[tmp.find(func_name):]
@@ -262,7 +272,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
                     cvv = ' ' + cv + ' '
                     if cvv in call_paras:
                         i = call_paras.index(cvv)
-                        func_paras = line[line.find('(') + 1:line.rfind(')')].split(',')
+                        func_paras = func_define[func_define.find('(') + 1:func_define.rfind(')')].split(',')
                         change_cv = func_paras[i]
                         # chang_cv 需要去掉前面的变量类型
                         change_cv = left_process(change_cv, 'space')
@@ -285,7 +295,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
             # 进行sink点匹配
             # 对于不同的漏洞类型进行了封装
             if cwe == '189':
-                sink_189(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, calculation_sink, point_var)
+                sink_189(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, calculation_sink, point_var, calculation_sinks)
             elif cwe == '119':
                 sink_119(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, point_var)
             elif cwe == '617':
@@ -319,6 +329,9 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
                 print('CV的上一级是：', new_cv)
                 cv_list[epoch + 1].append(new_cv)
     print(epoch)
+    if cwe =='189' and  sink_cv:
+        for calcu in calculation_sinks:
+            sink_results.append(calcu)
     print("如果当前cv列表没有找到sink点，下次查找的cv是：", cv_list[epoch + 1])
 
 
@@ -426,6 +439,8 @@ def has_cv(cv, line):
     if (('*' + cv + ',') in line):
         return True
     if (('*' + cv + ')') in line):
+        return True
+    if (cv + ' =') in line:
         return True
 
     return False
