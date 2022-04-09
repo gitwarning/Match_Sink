@@ -11,9 +11,9 @@ from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 
 cwe = '772' #匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
-diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/ImageMagick/CVE-2018-16640/CVE-2018-16640_CWE-772_76efa969342568841ecf320b5a041685a6d24e0b_png.c_1.1_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/ImageMagick/CVE-2018-16640/slices_add.txt'
+diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/ImageMagick/CVE-2018-16640/CVE-2018-16640_CWE-772_76efa969342568841ecf320b5a041685a6d24e0b_png.c_1.1.diff'
 # old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/CVE-2015-6819_CWE-189_84afc6b70d24fc0bf686e43138c96cf60a9445fe_mjpegdec.c_1.1_OLD.c"
 # slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/slices.txt"
 list_key_words = []  # api函数列表
@@ -519,9 +519,11 @@ def match_sources(slices, sink_cv):
         tmp_line = ''
         for line in source_lines:
             # 在找source点时如果当前行是对cv的成员赋值，不可以将此视为cv的赋值
-            if has_only_cv(line, tmp_cv) and not has_cv_fz_left(tmp_cv, line):  # 如果含有关键变量但不含等号赋值
+            # #不能把切片的第一行信息行作为source点（尽管它可能含有cv）
+            if has_only_cv(line, tmp_cv) and not has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 如果含有关键变量但不含等号赋值
                 tmp_line = line  # 先暂存当前语句，然后继续向上找
-            if has_only_cv(line, tmp_cv) and has_cv_fz_left(tmp_cv, line):  # 含有等号的赋值
+                print('暂存的语句是: ', tmp_line)
+            if has_only_cv(line, tmp_cv) and has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 含有等号的赋值
                 #( avctx -> width * avctx -> bits_per_coded_sample + 7 ) / 8  的值赋值给了CV tmp_cv可能是一个表达式，如何区分出来
                 tmp_cv = re.split('[,;]', line.split(' = ')[-1])[0]  # 取出等号右边的变量，把谁的值赋给了CV，CV=b，继续向上跟踪b
                 if is_expression(tmp_cv):
@@ -531,6 +533,7 @@ def match_sources(slices, sink_cv):
                 else:
                     tmp_line = line
                     print(tmp_cv, '的值赋值给了CV')
+                    print('暂存的语句2是: ', tmp_line)
         if flag == 2:
             print("CV是由多个变量共同确定，将此行定位source点：", line)
             continue
