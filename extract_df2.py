@@ -1075,7 +1075,7 @@ if __name__ == "__main__":
                 add_num += 1
                 every_num += 1
             
-            if(after_add_del and line[0] != '+' and line[0] != '-'):#视为一个加减块结束
+            if(after_add_del and line != '' and line[0] != '+' and line[0] != '-'):#视为一个加减块结束
                 valid_message = False
                 medium_num -= (every_num + 1)
                 diff_message.setdefault(start_num, []).append([medium_num, add_num])
