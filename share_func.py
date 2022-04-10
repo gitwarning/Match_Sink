@@ -16,6 +16,8 @@ def is_risk_func(line, cv):
         flag = 1
     if (cv + ' *') in line:
         flag = 1
+    if (cv + ' ,') in line:
+        flag = 1
     if flag == 0:  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
         return False
     if ('memcpy' in line):  # 之后换成正则表达式应该会更好
@@ -33,6 +35,8 @@ def is_risk_func(line, cv):
     elif ('copy' in line):
         return True
     elif ('recv' in line and 'recv ->' not in line):
+        return True
+    elif 'AcquireVirtualMemory' in line:
         return True
     else:
         return False
