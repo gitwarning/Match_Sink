@@ -13,12 +13,12 @@ cwe = '119' #匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-5126/CVE-2016-5126_CWE-119_a6b3167fa0e825aebb5a7cd8b437b6d41584a196_iscsi.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-5126/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2014-0143-50/CVE-2014-0143_CWE-190_509a41bab5306181044b5fff02eadf96d9c8676a_cloop.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2014-0143-50/slices.txt"
 diff_file = '' #只在匹配CWE-772类型时使用
 list_key_words = []  # api函数列表
 # 变量类型列表
-val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed']
+val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed', 'uint32_t']
 # 操作运算符列表
 sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
 
@@ -464,6 +464,7 @@ def has_cv_fz_left(cv, line):
     # 如果当前行是变量声明行 int buf_size = alac -> max_samples_per_frame * sizeof ( int32_t )
     left_list = left.split(' ')
     if left_list[0] in val_type or (not left_list[0].islower()):
+
         if cv == left_list[-1]:  # int * buf
             return True
     '''
@@ -500,8 +501,11 @@ def find_in_vulfile(tmp_line, cv):
 
 # 要找到每个关键变量的source点
 def has_only_cv(line, cv):
-    if (cv + ' ->') in line:
-        return False
+    if (cv + ' ->') in line:  # cv = s, line : bs -> opaque
+        lines = line.split(" ")
+        index = lines.index('->')
+        if cv == lines[index-1]:
+            return False
     if (cv + ' .') in line:
         return False
     return has_cv(cv, line)
@@ -509,6 +513,8 @@ def has_only_cv(line, cv):
 
 # 判断是否是表达式
 def is_expression(cv):
+    if '->' in cv:
+        cv = cv.replace(" -> ", "$")
     cvs = re.split('[*+/-]', cv)
     if len(cvs) > 1:
         return True
@@ -594,6 +600,7 @@ def match_sources(slices, sink_cv):
                 # 如果等号左边是变量声明的情况 stellaris_enet_state * s = qemu_get_nic_opaque ( nc )
                 if len(line_cvs[0].split(" ")) > 1:
                     line_cvs[0] = left_process(line_cvs[0], 'space')
+
                 if (cv in line_cvs):
                     fucnname = get_funcname(line)
                     if fucnname:  # 如果是外部函数
