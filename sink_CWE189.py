@@ -1,7 +1,7 @@
 from share_func import *
 
 
-def sink_189(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, calculation_sink, point_var, calculation_sinks):
+def sink_189(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, calculation_sink, point_var ):
     if is_array(line, cv) and array_sink:
         print('sink点是数组访问越界：', line)
         sink_results.append(line)
@@ -19,5 +19,5 @@ def sink_189(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_fun
         risk_func_sink = False
     if is_calculation(line, cv) and calculation_sink:
         print('此行是整数运算导致的整数溢出类型：', line)  # 整数溢出后还会造成影响的
-        calculation_sinks.append(line)
+        sink_results.append(line)
         calculation_sink = False
