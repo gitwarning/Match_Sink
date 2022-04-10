@@ -18,3 +18,4 @@ def sink_617(line, cv, sink_results, assert_sink, sink_cv):
         sink_results.append(line)
         sink_cv.append(cv)
         assert_sink = False
+    return assert_sink
