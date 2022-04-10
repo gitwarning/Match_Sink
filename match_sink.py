@@ -13,8 +13,8 @@ cwe = '119' #匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2015-8666/CVE-2015-8666_CWE-119_d9a3b33d2c9f996537b7f1d0246dee2d0120cefb_core.c_4.0_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2015-8666/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-5126/CVE-2016-5126_CWE-119_a6b3167fa0e825aebb5a7cd8b437b6d41584a196_iscsi.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-5126/slices.txt"
 diff_file = '' #只在匹配CWE-772类型时使用
 list_key_words = []  # api函数列表
 # 变量类型列表
@@ -64,7 +64,9 @@ def special_cv_process(cv):
         for i in cv_tmp:
             new_cv += i + ' . '
         cv = [new_cv.strip(' . ')]
-        return cv
+        if '->' not in cv[0]:  # ar->gpe.en
+            return cv
+        cv = cv[0]
     if ('->' in cv):
         new_cv = ''
         cv_tmp = cv.split('->')

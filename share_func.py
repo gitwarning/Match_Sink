@@ -7,9 +7,15 @@ sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
 
 def is_risk_func(line, cv):
     # print('this is a test.')
+    flag = 0
     if (' ' + cv + ' ' not in line):
+        flag = 0
+    if (cv + ' =') in line:
+        flag = 1
+    if (cv + ' )') in line:
+        flag = 1
+    if flag == 0:  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
         return False
-
     if ('memcpy' in line):  # 之后换成正则表达式应该会更好
         return True
     elif ('alloc' in line):
