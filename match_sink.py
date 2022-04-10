@@ -15,7 +15,8 @@ diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹�
 # slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/slices.txt"
 list_key_words = ['if', 'while', 'for']  # api函数列表
 # 变量类型列表
-val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed']
+val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
+            'uint32_t']
 # 操作运算符列表
 sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
 
@@ -61,7 +62,9 @@ def special_cv_process(cv):
         for i in cv_tmp:
             new_cv += i + ' . '
         cv = [new_cv.strip(' . ')]
-        return cv
+        if '->' not in cv[0]:  # ar->gpe.en
+            return cv
+        cv = cv[0]
     if ('->' in cv):
         new_cv = ''
         cv_tmp = cv.split('->')
@@ -169,7 +172,9 @@ def left_process(cv, sign):  # 对左边的特殊变量进行空格处理
         else:
             return (tmp_cv + cv[sp3:]).replace(' ', '')
 
-    return cv.split(' ')[-1]
+        return cv.split(' ')[-1]
+    else:
+        return cv
 
 
 def get_funcname(code):
@@ -202,18 +207,20 @@ def has_cv_fz_right(cv, line):
 
     return False
 
+
 # 判断该行是不是return关键变量的行
 def is_return_cv(line, cv):
     line = line.strip()
-    if(line[:7] != 'return '):
+    if (line[:7] != 'return '):
         return False
 
-    if(' ' + cv + ' ') in line:
+    if (' ' + cv + ' ') in line:
         return True
     else:
         return False
 
-def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, point_var):
+
+def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point_var):
     # 对于每一个cv都去匹配sink点
     for cv in cv_list[epoch]:
         array_sink = True
@@ -249,7 +256,16 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
             if is_funcdefine(line):
                 # 函数定义的上一行不一定是该函数的函数调用行,先判断上一行是否是函数调用行（函数名）获取上一行的信息，
                 # 判断cv是否在函数调用语句的参数中，如果在就记录下来cv的位置（第几个参数）
-                func_name = get_funcname(line)[0]
+                # 函数定义可能出现跨行的现象
+                func_define = line
+                if 'location' not in line:
+                    func_define = ''
+                    num = 0
+                    while 'location' not in after_diff[i + num]:
+                        func_define += after_diff[i + num]
+                        num += 1  # 函数定义跨的行数
+                    func_define += after_diff[i + num]
+                func_name = get_funcname(func_define)[0]
                 if func_name in after_diff[i - 1]:
                     tmp = after_diff[i - 1]
                     tmp = tmp[tmp.find(func_name):]
@@ -257,21 +273,22 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, 
                     cvv = ' ' + cv + ' '
                     if cvv in call_paras:
                         i = call_paras.index(cvv)
-                        func_paras = line[line.find('(') + 1:line.rfind(')')].split(',')
+                        func_paras = func_define[func_define.find('(') + 1:func_define.rfind(')')].split(',')
                         change_cv = func_paras[i]
                         # chang_cv 需要去掉前面的变量类型
                         change_cv = left_process(change_cv, 'space')
                         if change_cv != cv and change_cv not in cv_list[epoch]:
                             cv_list[epoch].append(change_cv)
                             print("当前CV跨函数，经转化后新的CV是：", change_cv)
-                continue
+                # continue return 语句中可能含有sink点
             # 如果是函数调用行，需要判断是不是对漏洞函数的调用，如果是且将关键变量作为返回值，需要把返回后的值加入关键变量列表
             func_name = get_funcname(line)
-            if (' = ' in line) and (func_name != []) and (return_flag == True):
+            if (' = ' in line) and (func_name != []) and return_flag:
                 this_line_func = func_name[0]
                 if this_line_func == vul_name:
                     print('该行是对漏洞函数的调用行且有返回值: ', line)
-                    return_cv = line.split(' = ')[0].split(' ')[-1].strip() # int line = advance_line ( dst , line , stride , & y , h , interleave );
+                    return_cv = line.split(' = ')[0].split(' ')[
+                        -1].strip()  # int line = advance_line ( dst , line , stride , & y , h , interleave );
                     if return_cv != cv and return_cv not in cv_list[epoch]:
                         cv_list[epoch].append(return_cv)
                         return_flag = False
@@ -326,7 +343,7 @@ def match_sinks(slices, cwe):
     flag = 0  # 标记diff修改的位置
     start = slices[0].find('[')
     end = slices[0].rfind(']')
-    flag_point  = False
+    flag_point = False
     if '@@' in slices[0]:
         tmp = slices[0].split(' @@ ')[-2]
         cv_list[0] = ast.literal_eval(slices[0].split(' @@ ')[-2])
@@ -335,20 +352,20 @@ def match_sinks(slices, cwe):
         diff_tmp = slices[0].split(' @@ ')[1].split('_')
         index = 3
         vul_file = diff_tmp[3]
-        while('.c' not in vul_file):
+        while ('.c' not in vul_file):
             index += 1
-            vul_file  = vul_file + '_' + diff_tmp[index] #漏洞文件名中可能含有下划线
+            vul_file = vul_file + '_' + diff_tmp[index]  # 漏洞文件名中可能含有下划线
         vul_name = slices[0].split(' @@ ')[2].strip()
         if (vul_name[0] == '*'):
             vul_name = vul_name[1:]
         flag_point = True
-    #point_vars = [] # 存放漏洞函数中有的指针变量
-    # 切片里用空格作为每种信息的分割不妥，之后用一个不会在代码中出现的符号(比如 @@ )进行分割，就可以直接用split函数了，但这样切片文件要全部更新
-    # FIX
-    # s = slices[0].find('{')
-    # e = slices[0].rfind('}')
-    # point_vars = slices[0][(s + 1):e].split(', ')
-        point_vars = slices[0].split(' @@ ')[-1].replace('{', '').replace('}', '').split(', ') #将指针变量信息转换成列表
+        # point_vars = [] # 存放漏洞函数中有的指针变量
+        # 切片里用空格作为每种信息的分割不妥，之后用一个不会在代码中出现的符号(比如 @@ )进行分割，就可以直接用split函数了，但这样切片文件要全部更新
+        # FIX
+        # s = slices[0].find('{')
+        # e = slices[0].rfind('}')
+        # point_vars = slices[0][(s + 1):e].split(', ')
+        point_vars = slices[0].split(' @@ ')[-1].replace('{', '').replace('}', '').split(', ')  # 将指针变量信息转换成列表
     else:
         cv_list[0] = ast.literal_eval(slices[0][start:(end + 1)])
         loc = slices[0].split(' ')[3]
@@ -378,7 +395,7 @@ def match_sinks(slices, cwe):
         sink_772(old_file, sink_results, diff_file, loc)
         for tmp_cv in cv_list[0]:
             sink_cv_tmp = special_cv_process(tmp_cv)
-            if(len(sink_cv_tmp) > 1):
+            if (len(sink_cv_tmp) > 1):
                 for i in range(1, len(sink_cv_tmp)):
                     if sink_cv_tmp[i] not in sink_cv:
                         sink_cv.append(sink_cv_tmp[i])
@@ -387,14 +404,14 @@ def match_sinks(slices, cwe):
         print(sink_cv)
         return sink_results, sink_cv
 
-    while len(sink_results) == 0 and epoch < 5:
+    while len(sink_cv) == 0 and cv_list[epoch] and epoch < 5:
         if flag_point:
-            find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, point_vars)
+            find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point_vars)
         else:
-            find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, cwe, vul_name, '')
+            find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, '')
         epoch += 1
     sink_cv = list(set(sink_cv))  # 对sink_cv 去重
-    return sink_results, sink_cv
+    return sink_results, sink_cv, cv_list
 
 
 def has_cv(cv, line):
@@ -422,6 +439,8 @@ def has_cv(cv, line):
         return True
     if (('*' + cv + ')') in line):
         return True
+    if (cv + ' =') in line:
+        return True
 
     return False
 
@@ -442,6 +461,7 @@ def has_cv_fz_left(cv, line):
     # 如果当前行是变量声明行 int buf_size = alac -> max_samples_per_frame * sizeof ( int32_t )
     left_list = left.split(' ')
     if left_list[0] in val_type or (not left_list[0].islower()):
+
         if cv == left_list[-1]:  # int * buf
             return True
     '''
@@ -478,8 +498,11 @@ def find_in_vulfile(tmp_line, cv):
 
 # 要找到每个关键变量的source点
 def has_only_cv(line, cv):
-    if (cv + ' ->') in line:
-        return False
+    if (cv + ' ->') in line:  # cv = s, line : bs -> opaque
+        lines = line.split(" ")
+        index = lines.index('->')
+        if cv == lines[index - 1]:
+            return False
     if (cv + ' .') in line:
         return False
     return has_cv(cv, line)
@@ -487,6 +510,8 @@ def has_only_cv(line, cv):
 
 # 判断是否是表达式
 def is_expression(cv):
+    if '->' in cv:
+        cv = cv.replace(" -> ", "$")
     cvs = re.split('[*+/-]', cv)
     if len(cvs) > 1:
         return True
@@ -499,10 +524,38 @@ def match_sources(slices, sink_cv):
     source_results = []
     source_lines = []
 
-    vul_function = slices[0].strip().split(' ')[2]
-    # print(vul_function)
-    loc = slices[0].split(' ')[3].strip()
     vulf_define = ''
+    if '@@' in slices[0]:
+        # tmp = slices[0].split(' @@ ')[-2]
+        loc = slices[0].split(' @@ ')[3]
+        diff_tmp = slices[0].split(' @@ ')[1].split('_')
+        index = 3
+        vul_file = diff_tmp[3]
+        while ('.c' not in vul_file):
+            index += 1
+            vul_file = vul_file + '_' + diff_tmp[index]  # 漏洞文件名中可能含有下划线
+        vul_function = slices[0].split(' @@ ')[2].strip()
+        if (vul_function[0] == '*'):
+            vul_name = vul_function[1:]
+        flag_point = True
+        # point_vars = [] # 存放漏洞函数中有的指针变量
+        # 切片里用空格作为每种信息的分割不妥，之后用一个不会在代码中出现的符号(比如 @@ )进行分割，就可以直接用split函数了，但这样切片文件要全部更新
+        # FIX
+        # s = slices[0].find('{')
+        # e = slices[0].rfind('}')
+        # point_vars = slices[0][(s + 1):e].split(', ')
+        point_vars = slices[0].split(' @@ ')[-1].replace('{', '').replace('}', '').split(', ')  # 将指针变量信息转换成列表
+    else:
+        loc = slices[0].split(' ')[3]
+        diff_tmp = slices[0].split(' ')[1].split('_')
+        index = 3
+        vul_file = diff_tmp[3]
+        while ('.c' not in vul_file):
+            index += 1
+            vul_file = vul_file + '_' + diff_tmp[index]  # 漏洞文件名中可能含有下划线
+        vul_function = slices[0].split(' ')[2].strip()
+        if (vul_function[0] == '*'):
+            vul_name = vul_function[1:]
     # print(vul_function)
     # print(slices[1])
 
@@ -543,7 +596,13 @@ def match_sources(slices, sink_cv):
                 line_cvs = res_tmp[0].strip().split(',')  # 可能存在多个变量被赋值,例如a, b = recv()
                 # 如果等号左边是变量声明的情况 stellaris_enet_state * s = qemu_get_nic_opaque ( nc )
                 if len(line_cvs[0].split(" ")) > 1:
+                    # TODO 还存在BDRVCloopState * s 的去除前面类型的情况
                     line_cvs[0] = left_process(line_cvs[0], 'space')
+                    if '*' in line_cvs[0]:
+                        tmps = line_cvs[0].split(' * ')
+                        if tmps[0] in val_type or (not tmps[0].islower()):
+                            line_cvs[0] = tmps[-1]  # int * buf
+
                 if (cv in line_cvs):
                     fucnname = get_funcname(line)
                     if fucnname:  # 如果是外部函数
@@ -575,7 +634,7 @@ def match_sources(slices, sink_cv):
                 tmp_line = line  # 先暂存当前语句，然后继续向上找
                 print('暂存的语句是: ', tmp_line)
             if has_only_cv(line, tmp_cv) and has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 含有等号的赋值
-                #( avctx -> width * avctx -> bits_per_coded_sample + 7 ) / 8  的值赋值给了CV tmp_cv可能是一个表达式，如何区分出来
+                # ( avctx -> width * avctx -> bits_per_coded_sample + 7 ) / 8  的值赋值给了CV tmp_cv可能是一个表达式，如何区分出来
                 tmp_cv = re.split('[,;]', line.split(' = ')[-1])[0]  # 取出等号右边的变量，把谁的值赋给了CV，CV=b，继续向上跟踪b
                 if is_expression(tmp_cv):
                     flag = 2
@@ -647,9 +706,13 @@ def main():
                 continue
             slices.append(line.strip())
             if (line.strip() == '------------------------------'):
-                sinks, sink_cv = match_sinks(slices, cwe)
+                sinks, sink_cv, cv_list = match_sinks(slices, cwe)
                 print('.......................sink is over.......................')
                 sources = match_sources(slices, sink_cv)  # 考虑根据sink点来匹配source点
+                # 如果匹配到sink点但是没有匹配到source点，考虑使用最开始的CV来匹配source点。
+                # 对于只有整数溢出的sink点sink_cv是空的，所以必须使用这种方法才能匹配source点
+                if sinks and not sources:
+                    sources = match_sources(slices, cv_list[0])
                 print('.......................source is over.......................')
                 # print(slices)
                 slices = []

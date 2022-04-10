@@ -7,9 +7,19 @@ sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
 
 def is_risk_func(line, cv):
     # print('this is a test.')
+    flag = 0
     if (' ' + cv + ' ' not in line):
+        flag = 0
+    if (cv + ' =') in line:
+        flag = 1
+    if (cv + ' )') in line:
+        flag = 1
+    if (cv + ' *') in line:
+        flag = 1
+    if (cv + ' ,') in line:
+        flag = 1
+    if flag == 0:  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
         return False
-
     if ('memcpy' in line):  # 之后换成正则表达式应该会更好
         return True
     elif ('alloc' in line):
@@ -24,7 +34,9 @@ def is_risk_func(line, cv):
         return True
     elif ('copy' in line):
         return True
-    elif ('recv' in line):
+    elif ('recv' in line and 'recv ->' not in line):
+        return True
+    elif 'AcquireVirtualMemory' in line:
         return True
     else:
         return False
@@ -99,9 +111,18 @@ def is_array(line, cv):
 
 #  sink点是整数运算导致的整数溢出类型匹配
 def is_calculation(line, cv):
+    if '(' in line and ')' in line:  # 在函数参数或者if，while条件中，整数溢出不需要等号
+        tmps = line[line.find('('):line.find(')')-1]
+        if ',' in tmps:
+            tmps = tmps.split(',')
+            for tmp in tmps:
+                if (cv + ' *') in tmp or (cv + ' +') in tmp or ('* ' + cv) in tmp or ('+ ' + cv) in tmp:
+                    return True
     if (cv + ' *') in line and '=' in line:  # 要有等号才算是整数溢出吗？
         return True
     if ('* ' + cv) in line and '=' in line:
+        if '*' == line[0]:
+            return False
         return True
     if (cv + ' +') in line:
         return True
@@ -110,5 +131,7 @@ def is_calculation(line, cv):
     if (cv + ' -') in line and (cv + ' ->') not in line:
         return True
     if ('- ' + cv) in line:
+        return True
+    if (cv + ' =') in line and '+' in line:
         return True
     return False
