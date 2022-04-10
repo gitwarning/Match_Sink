@@ -326,7 +326,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
             if (len(sp_cv) > 1):
                 cv = sp_cv[0]
                 for i in range(1, len(sp_cv)):  # 这种是因为提取数组下标提取出了多个变量
-                    cv_list.append(sp_cv[i])
+                    cv_list[epoch].append(sp_cv[i])
             else:
                 cv = sp_cv[0]
             new_cv = left_process(cv, 'up')
@@ -515,7 +515,14 @@ def has_only_cv(line, cv):
 def is_expression(cv):
     if '->' in cv:
         cv = cv.replace(" -> ", "$")
+    # ( PhotoshopProfile * ) user_data
+    if '*' in cv:
+        tmps = cv.split(" ")
+        if not tmps[tmps.index('*')-1].islower():
+            return False
     cvs = re.split('[*+/-]', cv)
+
+
     if len(cvs) > 1:
         return True
     else:
