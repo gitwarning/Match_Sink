@@ -599,7 +599,12 @@ def match_sources(slices, sink_cv):
                 line_cvs = res_tmp[0].strip().split(',')  # 可能存在多个变量被赋值,例如a, b = recv()
                 # 如果等号左边是变量声明的情况 stellaris_enet_state * s = qemu_get_nic_opaque ( nc )
                 if len(line_cvs[0].split(" ")) > 1:
+                    #TODO 还存在BDRVCloopState * s 的去除前面类型的情况
                     line_cvs[0] = left_process(line_cvs[0], 'space')
+                    if '*' in line_cvs[0]:
+                        tmps = line_cvs[0].split('*')
+                        if tmps[0] in val_type or (not tmps[0].islower()):
+                            line_cvs[0] == tmps[-1]  # int * buf
 
                 if (cv in line_cvs):
                     fucnname = get_funcname(line)
