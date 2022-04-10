@@ -22,3 +22,4 @@ def sink_189(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_fun
         sink_results.append(line)
         sink_cv.append(cv)
         calculation_sink = False
+    return array_sink, pointer_sink, risk_func_sink, calculation_sink
