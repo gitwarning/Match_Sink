@@ -8,13 +8,13 @@ from sink_CWE189 import sink_189
 from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 
-cwe = '189'  # 匹配的漏洞类型
-# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
-# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
-# diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2019-13136/CVE-2019-13136_CWE-190_fe5f4b85e6b1b54d3b4588a77133c06ade46d891_tiff.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2019-13136/slices.txt"
-diff_file = ''  # 只在匹配CWE-772类型时使用
+cwe = '401'  # 匹配的漏洞类型
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/slices.txt'
+diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0.diff'
+# old_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2019-13136/CVE-2019-13136_CWE-190_fe5f4b85e6b1b54d3b4588a77133c06ade46d891_tiff.c_1.1_OLD.c"
+# slice_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2019-13136/slices.txt"
+# diff_file = ''  # 只在匹配CWE-772类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
@@ -393,7 +393,7 @@ def match_sinks(slices):
         if flag == 1:
             after_diff.append(line)
 
-    if cwe == '772':
+    if cwe == '772' or cwe == '401':
         sink_772(old_file, sink_results, diff_file, loc)
         for tmp_cv in cv_list[0]:
             sink_cv_tmp = special_cv_process(tmp_cv)
@@ -404,7 +404,7 @@ def match_sinks(slices):
 
             sink_cv.append(sink_cv_tmp[0])
         print(sink_cv)
-        return sink_results, sink_cv
+        return sink_results, sink_cv, cv_list
 
     while len(sink_cv) == 0 and cv_list[epoch] and epoch < 5:
         if flag_point:
