@@ -5,6 +5,7 @@
 
 sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
 
+
 def is_risk_func(line, cv):
     # print('this is a test.')
     flag = 0
@@ -112,7 +113,7 @@ def is_array(line, cv):
 #  sink点是整数运算导致的整数溢出类型匹配
 def is_calculation(line, cv):
     if '(' in line and ')' in line:  # 在函数参数或者if，while条件中，整数溢出不需要等号
-        tmps = line[line.find('('):line.find(')')-1]
+        tmps = line[line.find('('):line.find(')') - 1]
         if ',' in tmps:
             tmps = tmps.split(',')
             for tmp in tmps:

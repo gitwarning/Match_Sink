@@ -2,18 +2,20 @@ from cmath import sin
 import os
 from markupsafe import re
 import ast
+
 from sink_CWE119 import sink_119
 from sink_CWE189 import sink_189
 from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 
-cwe = '119' #匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/PHP/CVE-2014-3478/CVE-2014-3478_CWE-119_27a14bc7ba285a0a5ebfdb55e54001aa11932b08_softmagic.c_softmagic.c_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE119/PHP/php/CVE-2014-3478/slices.txt'
-diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/ImageMagick/CVE-2018-16640/CVE-2018-16640_CWE-772_76efa969342568841ecf320b5a041685a6d24e0b_png.c_1.1.diff'
-# old_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/CVE-2015-6819_CWE-189_84afc6b70d24fc0bf686e43138c96cf60a9445fe_mjpegdec.c_1.1_OLD.c"
-# slice_file = "E:/漏洞检测/已分析过漏洞/CWE-189_FFmpeg/CWE-189/CVE-2015-6819/slices.txt"
-list_key_words = ['if', 'while', 'for']  # api函数列表
+cwe = '189'  # 匹配的漏洞类型
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
+# diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2019-13136/CVE-2019-13136_CWE-190_fe5f4b85e6b1b54d3b4588a77133c06ade46d891_tiff.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2019-13136/slices.txt"
+diff_file = ''  # 只在匹配CWE-772类型时使用
+list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
             'uint32_t']
@@ -296,9 +298,9 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
 
             # 进行sink点匹配
             # 对于不同的漏洞类型进行了封装
-            if cwe == '189':
+            if cwe == '189' or cwe == '190' or cwe == '191':
                 array_sink, pointer_sink, risk_func_sink, calculation_sink = sink_189(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, calculation_sink, point_var)
-            elif cwe == '119':
+            elif cwe == '119' or cwe == '125' or cwe == '787' or cwe == '120':
                 array_sink, pointer_sink, risk_func_sink = sink_119(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, point_var)
             elif cwe == '617':
                 assert_sink = sink_617(line, cv, sink_results, assert_sink, sink_cv)
@@ -334,7 +336,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
     print("如果当前cv列表没有找到sink点，下次查找的cv是：", cv_list[epoch + 1])
 
 
-def match_sinks(slices, cwe):
+def match_sinks(slices):
     print('.......................sink is start.......................')
     epoch = 0  # 二维数组cv的选取下标
     sink_results = []
@@ -643,6 +645,9 @@ def match_sources(slices, sink_cv):
             if has_only_cv(line, tmp_cv) and has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 含有等号的赋值
                 # ( avctx -> width * avctx -> bits_per_coded_sample + 7 ) / 8  的值赋值给了CV tmp_cv可能是一个表达式，如何区分出来
                 tmp_cv = re.split('[,;]', line.split(' = ')[-1])[0]  # 取出等号右边的变量，把谁的值赋给了CV，CV=b，继续向上跟踪b
+                #处理强制类型转换profile = ( PhotoshopProfile * ) user_data;
+                if tmp_cv[0] == '(':
+                    tmp_cv = tmp_cv[tmp_cv.find(')')+1:].strip()
                 if is_expression(tmp_cv):
                     flag = 2
                     source_results.append(line)
@@ -671,7 +676,7 @@ def match_sources(slices, sink_cv):
         if (tmp_line == ''):  # 没有找到任何有关键变量出现的语句(显然是不合理的，这种是数组/指针类型，还需要进一步处理)
             continue
         # print(vulf_define)
-        if (' = ' not in tmp_line):  # 当前行可能是函数定义行
+        if ('=' not in tmp_line):  # 当前行可能是函数定义行
             # print(vulf_define)
             # print(tmp_line)
             if (tmp_line.strip() in vulf_define.strip()):  # 如果出现在函数定义行,则视为函数参数
@@ -713,7 +718,7 @@ def main():
                 continue
             slices.append(line.strip())
             if (line.strip() == '------------------------------'):
-                sinks, sink_cv, cv_list = match_sinks(slices, cwe)
+                sinks, sink_cv, cv_list = match_sinks(slices)
                 print('.......................sink is over.......................')
                 sources = match_sources(slices, sink_cv)  # 考虑根据sink点来匹配source点
                 # 如果匹配到sink点但是没有匹配到source点，考虑使用最开始的CV来匹配source点。

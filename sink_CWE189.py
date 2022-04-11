@@ -20,6 +20,5 @@ def sink_189(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_fun
     if is_calculation(line, cv) and calculation_sink:
         print('此行是整数运算导致的整数溢出类型：', line)  # 整数溢出后还会造成影响的
         sink_results.append(line)
-        sink_cv.append(cv)
         calculation_sink = False
     return array_sink, pointer_sink, risk_func_sink, calculation_sink
