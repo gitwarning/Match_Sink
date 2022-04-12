@@ -350,7 +350,7 @@ def find_first_use(after_diff, cv_list, sink_results, sink_cv, epoch):
     for cv in cv_list[epoch]:
         print("********** "+cv+" *********")
         for line in after_diff:
-            if(' ' + cv + ' ') in line:
+            if has_cv(cv, line):
                 print('第一次使用的位置是: ' + line)
                 sink_results.append(line)
                 sink_cv.append(cv)
