@@ -9,9 +9,9 @@ from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 
 cwe = '401'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/slices.txt'
-diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0.diff'
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/ImageMagick/CVE-2019-7396/CVE-2019-7396_CWE-399_748a03651e5b138bcaf160d15133de2f4b1b89ce_sixel.c_2.1_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/ImageMagick/CVE-2019-7396/slices.txt'
+diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/ImageMagick/CVE-2019-7396/CVE-2019-7396_CWE-399_748a03651e5b138bcaf160d15133de2f4b1b89ce_sixel.c_2.1.diff'
 # old_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2019-13136/CVE-2019-13136_CWE-190_fe5f4b85e6b1b54d3b4588a77133c06ade46d891_tiff.c_1.1_OLD.c"
 # slice_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2019-13136/slices.txt"
 # diff_file = ''  # 只在匹配CWE-772类型时使用
@@ -582,11 +582,11 @@ def match_sources(slices, sink_cv):
     # cvs = ast.literal_eval(slices[0][start:(end + 1)])
     # print(cvs)
     for line in slices:
-        this_loc = line.split('location: ')[-1].split(' file: ')[0]
-        source_lines.append(line)
         if ('(key_var lines)' in line):
             break
-        elif (this_loc == loc):
+        this_loc = line.split('location: ')[-1].split(' file: ')[0]
+        source_lines.append(line)
+        if (this_loc == loc):
             break
     source_lines.reverse()  # 将切片逆序
     # print(source_lines)
