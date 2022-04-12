@@ -1,5 +1,9 @@
+from share_func import has_cv
+
+
 def is_path(line, cv):
-    if (' ' + cv + ' ' not in line):
+
+    if not has_cv(cv, line):  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
         return False
 
     if ('open' in line):
@@ -14,6 +18,8 @@ def is_path(line, cv):
         return True
     elif ('setProperty' in line):
         return True
+    else:
+        return False
 
 
 def sink_22(line, cv, sink_results, path_sink, sink_cv):
@@ -22,3 +28,4 @@ def sink_22(line, cv, sink_results, path_sink, sink_cv):
         sink_results.append(line)
         sink_cv.append(cv)
         path_sink = False
+    return path_sink

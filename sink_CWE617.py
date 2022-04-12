@@ -1,5 +1,9 @@
+from share_func import has_cv
+
+
 def is_assert(line, cv):
-    if (' ' + cv + ' ' not in line):
+
+    if not has_cv(cv, line):  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
         return False
 
     if ('assert' in line):
@@ -10,6 +14,8 @@ def is_assert(line, cv):
         return True
     elif ('validate_as_request' in line):
         return True
+    else:
+        return False
 
 
 def sink_617(line, cv, sink_results, assert_sink, sink_cv):

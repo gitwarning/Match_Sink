@@ -5,16 +5,18 @@ import ast
 
 from sink_CWE119 import sink_119
 from sink_CWE189 import sink_189
+from sink_CWE22 import sink_22
+from sink_CWE415 import sink_415, sink_416
 from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 
-cwe = '401'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/ImageMagick/CVE-2019-7396/CVE-2019-7396_CWE-399_748a03651e5b138bcaf160d15133de2f4b1b89ce_sixel.c_2.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/ImageMagick/CVE-2019-7396/slices.txt'
-diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/ImageMagick/CVE-2019-7396/CVE-2019-7396_CWE-399_748a03651e5b138bcaf160d15133de2f4b1b89ce_sixel.c_2.1.diff'
-# old_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2019-13136/CVE-2019-13136_CWE-190_fe5f4b85e6b1b54d3b4588a77133c06ade46d891_tiff.c_1.1_OLD.c"
-# slice_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2019-13136/slices.txt"
-# diff_file = ''  # 只在匹配CWE-772类型时使用
+cwe = '416'  # 匹配的漏洞类型
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
+# diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-6833/CVE-2016-6833_CWE-416_6c352ca9b4ee3e1e286ea9e8434bd8e69ac7d0d8_vmxnet3.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-6833/slices.txt"
+diff_file = ''  # 只在匹配CWE-772类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
@@ -230,6 +232,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
         risk_func_sink = True
         calculation_sink = True
         assert_sink = True
+        path_sink = True
+        free_sink = 0
         # if cwe == '119':
         #     calculation_sink = False
         # elif cwe == '189':
@@ -304,6 +308,12 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                 array_sink, pointer_sink, risk_func_sink = sink_119(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, point_var)
             elif cwe == '617':
                 assert_sink = sink_617(line, cv, sink_results, assert_sink, sink_cv)
+            elif cwe == '22':
+                path_sink = sink_22(line, cv, sink_results, path_sink, sink_cv)
+            elif cwe == '415':
+                free_sink = sink_415(line, cv, sink_results, free_sink, sink_cv)
+            elif cwe == '416':
+                free_sink = sink_416(line, cv, sink_results, free_sink, sink_cv)
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
             if has_cv_fz_right(cv, line):
 
@@ -334,6 +344,17 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                 cv_list[epoch + 1].append(new_cv)
     print(epoch)
     print("如果当前cv列表没有找到sink点，下次查找的cv是：", cv_list[epoch + 1])
+
+
+def find_first_use(after_diff, cv_list, sink_results, sink_cv, epoch):
+    for cv in cv_list[epoch]:
+        print("********** "+cv+" *********")
+        for line in after_diff:
+            if(' ' + cv + ' ') in line:
+                print('第一次使用的位置是: ' + line)
+                sink_results.append(line)
+                sink_cv.append(cv)
+                break
 
 
 def match_sinks(slices):
@@ -412,6 +433,15 @@ def match_sinks(slices):
         else:
             find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, '')
         epoch += 1
+
+    # 对于416类型的如果没有找到free_sink点，则将sink点放在第一次使用的位置
+    if cwe == '416' and not sink_cv:
+        print('416类型没有找到free的sink点，现在开始寻找第一次使用的位置=========')
+        new_epoch = 0
+        while len(sink_cv) == 0 and new_epoch < 5:
+            find_first_use(after_diff, cv_list, sink_results, sink_cv, new_epoch)
+            new_epoch += 1
+
     sink_cv = list(set(sink_cv))  # 对sink_cv 去重
     return sink_results, sink_cv, cv_list
 
@@ -573,7 +603,10 @@ def match_sources(slices, sink_cv):
 
         if ('location' not in slices[1]):
             vulf_define = slices[1].strip() + slices[2].strip()
-
+    elif vul_function in slices[2]:
+        vulf_define = slices[1].strip() + slices[2].strip()
+        if 'location' not in slices[2]:
+            vulf_define += slices[3]
     # # cvs = eval(slices[0].split(' ')[-1])
     # start = slices[0].find('[')
     # end = slices[0].rfind(']')
@@ -590,7 +623,7 @@ def match_sources(slices, sink_cv):
             break
     source_lines.reverse()  # 将切片逆序
     # print(source_lines)
-
+    #开始针对每一个sink_cv匹配source点
     for cv in sink_cv:
         num = len(source_results)
         print('now, is ' + cv)
@@ -638,13 +671,13 @@ def match_sources(slices, sink_cv):
         tmp_line = ''
         for line in source_lines:
             # 在找source点时如果当前行是对cv的成员赋值，不可以将此视为cv的赋值
-            # #不能把切片的第一行信息行作为source点（尽管它可能含有cv）
+            # 不能把切片的第一行信息行作为source点（尽管它可能含有cv）
             if has_only_cv(line, tmp_cv) and not has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 如果含有关键变量但不含等号赋值
                 tmp_line = line  # 先暂存当前语句，然后继续向上找
                 print('暂存的语句是: ', tmp_line)
             if has_only_cv(line, tmp_cv) and has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 含有等号的赋值
                 # ( avctx -> width * avctx -> bits_per_coded_sample + 7 ) / 8  的值赋值给了CV tmp_cv可能是一个表达式，如何区分出来
-                tmp_cv = re.split('[,;]', line.split(' = ')[-1])[0]  # 取出等号右边的变量，把谁的值赋给了CV，CV=b，继续向上跟踪b
+                tmp_cv = re.split('[,;]', line.split(' = ')[-1])[0].strip()  # 取出等号右边的变量，把谁的值赋给了CV，CV=b，继续向上跟踪b
                 #处理强制类型转换profile = ( PhotoshopProfile * ) user_data;
                 if tmp_cv[0] == '(':
                     tmp_cv = tmp_cv[tmp_cv.find(')')+1:].strip()
