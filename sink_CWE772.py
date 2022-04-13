@@ -1,11 +1,9 @@
-from audioop import add
 from share_func import *
 import re
 
 def get_diff_message(diff_content):
     diff_message = {}
     valid_message = False
-    has_delete = False
     every_num = 0
     add_num = 0
     for line in diff_content:
@@ -44,7 +42,7 @@ def get_diff_message(diff_content):
         medium_num += 1
     
     print(diff_message)
-    return diff_message, has_delete
+    return diff_message
 
 def sink_772(old_file, sink_results, diff_file, loc):
     diff_mes = {}
@@ -55,7 +53,7 @@ def sink_772(old_file, sink_results, diff_file, loc):
         diff_content = f.readlines()
 
     num_fin = 0
-    diff_mes, has_delete = get_diff_message(diff_content)
+    diff_mes = get_diff_message(diff_content)
 
     for start_line in diff_mes.keys():
         num_list = diff_mes[start_line]

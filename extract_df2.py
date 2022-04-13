@@ -579,12 +579,14 @@ def read_step1_output(step1_out_filepath):
         flag = 0
         startnode_info_diff = {}
         if len(_file) < 3: #说明没有内容
-            file_name_tmp = _file[0].split("/")[-1].split('diff')[0][:-1]
+            # file_name_tmp = _file[0].split("/")[-1].split('diff')[0][:-1]
+            file_name_tmp = _file[0].split("/")[-1].split('.diff')[0][:-1]
             res_filname.append(file_name_tmp.split('_')[-2])#append进去的是漏洞文件名(例如ffserver.c)
             
             startnode_info_diff.setdefault(file_name_tmp,[]).append('')
         else:
-            file_name_tmp = _file[0].split("/")[-1].split('diff')[0][:-1]
+            # file_name_tmp = _file[0].split("/")[-1].split('diff')[0][:-1]
+            file_name_tmp = _file[0].split("/")[-1].split('.diff')[0][:-1]
             res_filname.append(file_name_tmp.split('_')[-2]) #该diff文件所对应的文件名
             
             hunk_list = []
