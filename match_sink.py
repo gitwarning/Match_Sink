@@ -10,13 +10,13 @@ from sink_CWE415 import sink_415, sink_416
 from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 
-cwe = '772'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/krb5/CVE-2015-8631/CVE-2015-8631_CWE-772_83ed75feba32e46f736fcce0d96a0445f29b96c2_server_stubs.c_stubs.c_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/krb5/CVE-2015-8631/slices.txt'
-diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE772/krb5/CVE-2015-8631/CVE-2015-8631_CWE-772_83ed75feba32e46f736fcce0d96a0445f29b96c2_server_stubs.c.diff'
-# old_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/CVE-2016-7912/CVE-2016-7912_CWE-416_38740a5b87d53ceb89eb2c970150f6e94e00373a_f_fs.c_1.1_OLD.c"
-# slice_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/CVE-2016-7912/slices.txt"
-# diff_file = ''  # 只在匹配CWE-772类型时使用
+cwe = '787'  # 匹配的漏洞类型
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
+# diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2017-5510/CVE-2017-5510_CWE-787_91cc3f36f2ccbd485a0456bab9aebe63b635da88_psd.c_2.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2017-5510/slices.txt"
+diff_file = ''  # 只在匹配CWE-772类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
@@ -284,8 +284,9 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                         # chang_cv 需要去掉前面的变量类型
                         change_cv = left_process(change_cv, 'space')
                         if change_cv != cv and change_cv not in cv_list[epoch]:
-                            cv_list[epoch].append(change_cv)
-                            print("当前CV跨函数，经转化后新的CV是：", change_cv)
+                            if change_cv != '...':
+                                cv_list[epoch].append(change_cv)
+                                print("当前CV跨函数，经转化后新的CV是：", change_cv)
                 # continue return 语句中可能含有sink点
             # 如果是函数调用行，需要判断是不是对漏洞函数的调用，如果是且将关键变量作为返回值，需要把返回后的值加入关键变量列表
             func_name = get_funcname(line)
@@ -638,7 +639,6 @@ def match_sources(slices, sink_cv):
                 line_cvs = res_tmp[0].strip().split(',')  # 可能存在多个变量被赋值,例如a, b = recv()
                 # 如果等号左边是变量声明的情况 stellaris_enet_state * s = qemu_get_nic_opaque ( nc )
                 if len(line_cvs[0].split(" ")) > 1:
-                    # TODO 还存在BDRVCloopState * s 的去除前面类型的情况
                     line_cvs[0] = left_process(line_cvs[0], 'space')
                     if '*' in line_cvs[0]:
                         tmps = line_cvs[0].split('*')

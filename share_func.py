@@ -65,7 +65,7 @@ def is_risk_func(line, cv):
         return True
     elif ('recv' in line and 'recv ->' not in line):
         return True
-    elif 'AcquireVirtualMemory' in line:
+    elif 'Write' in line or 'write' in line:
         return True
     else:
         return False
