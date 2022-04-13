@@ -5,6 +5,16 @@
 
 sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
 
+def has_only_cv(line, cv):
+    if (cv + ' ->') in line:  # cv = s, line : bs -> opaque
+        lines = line.split(" ")
+        index = lines.index('->')
+        if cv == lines[index - 1]:
+            return False
+    if (cv + ' .') in line:
+        return False
+    return has_cv(cv, line)
+
 def has_cv(cv, line):
     # print(('*' + cv + ','))
 

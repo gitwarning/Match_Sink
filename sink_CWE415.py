@@ -7,12 +7,12 @@ sink点的规律：
 
 
 # 在函数名中匹配会更好一些？
-from share_func import has_cv
+from share_func import has_only_cv
 
 
 def is_free(line, cv):
 
-    if not has_cv(cv, line):  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
+    if not has_only_cv(line, cv):  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
         return False
     if ('free' in line):
         return True

@@ -14,13 +14,13 @@ cwe = '416'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-6833/CVE-2016-6833_CWE-416_6c352ca9b4ee3e1e286ea9e8434bd8e69ac7d0d8_vmxnet3.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/qemu/CVE-2016-6833/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/CVE-2016-7912/CVE-2016-7912_CWE-416_38740a5b87d53ceb89eb2c970150f6e94e00373a_f_fs.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/CVE-2016-7912/slices.txt"
 diff_file = ''  # 只在匹配CWE-772类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
-            'uint32_t']
+            'uint32_t', 'struct']
 # 操作运算符列表
 sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
 
@@ -641,9 +641,11 @@ def match_sources(slices, sink_cv):
                     # TODO 还存在BDRVCloopState * s 的去除前面类型的情况
                     line_cvs[0] = left_process(line_cvs[0], 'space')
                     if '*' in line_cvs[0]:
-                        tmps = line_cvs[0].split(' * ')
+                        tmps = line_cvs[0].split('*')
+                        if 'struct' in tmps[0]:
+                            line_cvs[0] = tmps[-1].strip()
                         if tmps[0] in val_type or (not tmps[0].islower()):
-                            line_cvs[0] = tmps[-1]  # int * buf
+                            line_cvs[0] = tmps[-1].strip()  # int * buf
 
                 if (cv in line_cvs):
                     fucnname = get_funcname(line)
