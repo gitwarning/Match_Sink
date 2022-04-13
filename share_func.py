@@ -37,7 +37,7 @@ def has_cv(cv, line):
 
 def is_risk_func(line, cv):
     # print('this is a test.')
-    if not has_cv():  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
+    if not has_cv(cv, line):  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
         return False
     if ('memcpy' in line):  # 之后换成正则表达式应该会更好
         return True
