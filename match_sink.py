@@ -330,15 +330,26 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                 chang_flag = 0
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
             if has_cv_fz_right(cv, line) and chang_flag == 1:
-
-                if '+=' in line:
+                tmp_cv = cv
+                # for循环怎么处理？for (j = 0; j < nelements && i < sh.sh_properties  cv需要从nelements==》j
+                if 'for (' in line:
+                    tmp_lines = re.split('[(;]', line)
+                    for tmp_line in tmp_lines:
+                        if '<' in tmp_line or '>' in tmp_line:
+                            if '&&' in tmp_line:
+                                tmp_lines.append(tmp_line.split('&&')[-1])
+                                tmp_line = tmp_line.split('&&')[0]
+                            tmps = re.split('[<>]', tmp_line)
+                            if cv == tmps[-1].strip():
+                                tmp_cv = tmps[0].strip()
+                elif '+=' in line:
                     tmp_cv = line.split('+=')[0].strip()
                 elif '|=' in line:
                     tmp_cv = line.split('|=')[0].strip()
                 else:
                     tmp_cv = line.split('=')[0].strip()
                 tmp_cv = left_process(tmp_cv, 'space')  # 对等号左边的变量进行处理(去掉可能存在的类型名等)
-                if tmp_cv not in cv_list[epoch + 1]:
+                if tmp_cv not in cv_list[epoch + 1] and tmp_cv not in cv_list[epoch]:
                     cv_list[epoch + 1].append(tmp_cv)
                     print('CV转化行：', line)
                     print('转换后的CV：', tmp_cv)
