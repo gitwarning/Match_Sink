@@ -10,12 +10,12 @@ from sink_CWE415 import sink_415, sink_416
 from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 
-cwe = '787'  # 匹配的漏洞类型
+cwe = '415'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2017-5510/CVE-2017-5510_CWE-787_91cc3f36f2ccbd485a0456bab9aebe63b635da88_psd.c_2.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2017-5510/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/415/CVE-2017-18174-8d/CVE-2017-18174_CWE-415_8dca4a41f1ad65043a78c2338d9725f859c8d2c3_pinctrl-amd.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/415/CVE-2017-18174-8d/slices.txt"
 diff_file = ''  # 只在匹配CWE-772类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -151,6 +151,12 @@ def left_process(cv, sign):  # 对左边的特殊变量进行空格处理
     #     return cv
 
     # 不确定这样改了之后会不会有其他问题（目前好像没发现）
+    if sign == 'space' and 'struct' in cv:
+        if '*' in cv:
+            cv = cv.split('*')[-1]
+        else:
+            cv = cv.split(' ')[-1]
+        return cv
     sp1 = cv.find('->')
     sp2 = cv.find('.')
     sp3 = cv.find('[')
@@ -256,6 +262,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
         print("=======now CV is " + cv + "=========")
         # 找到diff修改的行，从diff修改行向下寻找sink点
         for i, line in enumerate(after_diff):
+            chang_flag = 1  # 排除if条件语句即使出现等号也只是判断的情况
             if is_return_cv(line, cv):
                 return_flag = True
             # 如果当前行是函数定义行，不参加sink点的匹配，但是可能涉及到sink点的转换（通过参数位置转换
@@ -315,20 +322,22 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                 free_sink = sink_415(line, cv, sink_results, free_sink, sink_cv)
             elif cwe == '416':
                 free_sink = sink_416(line, cv, sink_results, free_sink, sink_cv)
+            if 'if' in line and ('==' in line or '!=' in line):
+                chang_flag = 0
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
-            if has_cv_fz_right(cv, line):
+            if has_cv_fz_right(cv, line) and chang_flag==1:
 
                 if '+=' in line:
                     tmp_cv = line.split('+=')[0].strip()
-                if '|=' in line:
+                elif '|=' in line:
                     tmp_cv = line.split('|=')[0].strip()
                 else:
                     tmp_cv = line.split('=')[0].strip()
                 tmp_cv = left_process(tmp_cv, 'space')  # 对等号左边的变量进行处理(去掉可能存在的类型名等)
                 if tmp_cv not in cv_list[epoch + 1]:
                     cv_list[epoch + 1].append(tmp_cv)
-                print('CV转化行：', line)
-                print('转换后的CV：', tmp_cv)
+                    print('CV转化行：', line)
+                    print('转换后的CV：', tmp_cv)
     # 当前所有CV都没有匹配到sink点，将其上一级加入到下一次要匹配的CV中cvList[epoch+1]
     if len(sink_results) == 0:
         for cv in cv_list[epoch]:
