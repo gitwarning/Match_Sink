@@ -9,14 +9,15 @@ from sink_CWE22 import sink_22
 from sink_CWE415 import sink_415, sink_416
 from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
+from sink_CWE835 import sink_835
 
-cwe = '787'  # 匹配的漏洞类型
-# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
-# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
-# diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2017-5510/CVE-2017-5510_CWE-787_91cc3f36f2ccbd485a0456bab9aebe63b635da88_psd.c_2.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2017-5510/slices.txt"
-diff_file = ''  # 只在匹配CWE-772类型时使用
+cwe = '835'  # 匹配的漏洞类型
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/ImageMagick/CVE-2015-8900/CVE-2015-8900_CWE-20_97aa7d7cfd2027f6ba7ce42caf8b798541b9cdc6_hdr.c_1.1_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/ImageMagick/CVE-2015-8900/slices.txt'
+diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/ImageMagick/CVE-2015-8900/CVE-2015-8900_CWE-20_97aa7d7cfd2027f6ba7ce42caf8b798541b9cdc6_hdr.c_1.1.diff'
+# old_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2017-5510/CVE-2017-5510_CWE-787_91cc3f36f2ccbd485a0456bab9aebe63b635da88_psd.c_2.1_OLD.c"
+# slice_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2017-5510/slices.txt"
+# diff_file = ''  # 只在匹配CWE-772类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
@@ -417,6 +418,19 @@ def match_sinks(slices):
 
     if cwe == '772' or cwe == '401':
         sink_772(old_file, sink_results, diff_file, loc)
+        for tmp_cv in cv_list[0]:
+            sink_cv_tmp = special_cv_process(tmp_cv)
+            if (len(sink_cv_tmp) > 1):
+                for i in range(1, len(sink_cv_tmp)):
+                    if sink_cv_tmp[i] not in sink_cv:
+                        sink_cv.append(sink_cv_tmp[i])
+
+            sink_cv.append(sink_cv_tmp[0])
+        print(sink_cv)
+        return sink_results, sink_cv, cv_list
+    
+    if cwe == '835':
+        sink_835(old_file, slices[1], sink_results, diff_file, loc)
         for tmp_cv in cv_list[0]:
             sink_cv_tmp = special_cv_process(tmp_cv)
             if (len(sink_cv_tmp) > 1):
