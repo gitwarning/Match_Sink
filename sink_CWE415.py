@@ -18,6 +18,10 @@ def is_free(line, cv):
         return True
     elif ('delete' in line):
         return True
+    elif 'realloc' in line:
+        return True
+    elif 'unregister' in line:
+        return True
     else:
         return False
 

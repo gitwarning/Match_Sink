@@ -45,9 +45,10 @@ def is_funcdefine(line):
 def special_cv_process(cv):
     if (cv[0] == '*'):
         # return cv[1:]
-        cv = [cv[1:]]
+        cv = cv.split('*')[1].strip()
+
     if (cv[0] == '&'):
-        cv = [cv[1:]]
+        cv = cv.split('&')[1].strip()
     # if('[' in cv):#关键变量是一个下标含有内容的数组
     # cv = cv[:(cv.find('['))]
     # return cv
@@ -152,6 +153,14 @@ def left_process(cv, sign):  # 对左边的特殊变量进行空格处理
     #     return cv
 
     # 不确定这样改了之后会不会有其他问题（目前好像没发现）
+    if sign == 'space' and 'struct' in cv:
+        if '*' in cv:
+            cv = cv.split('*')[-1]
+        else:
+            cv = cv.split(' ')[-1]
+        return cv
+    if sign == 'space' and cv[0] == '*':
+        cv = cv.split('*')[1].strip()
     sp1 = cv.find('->')
     sp2 = cv.find('.')
     sp3 = cv.find('[')
@@ -257,6 +266,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
         print("=======now CV is " + cv + "=========")
         # 找到diff修改的行，从diff修改行向下寻找sink点
         for i, line in enumerate(after_diff):
+            chang_flag = 1  # 排除if条件语句即使出现等号也只是判断的情况
             if is_return_cv(line, cv):
                 return_flag = True
             # 如果当前行是函数定义行，不参加sink点的匹配，但是可能涉及到sink点的转换（通过参数位置转换
@@ -316,20 +326,34 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                 free_sink = sink_415(line, cv, sink_results, free_sink, sink_cv)
             elif cwe == '416':
                 free_sink = sink_416(line, cv, sink_results, free_sink, sink_cv)
+            # if 含等号是判断不是转换
+            if 'if' in line and ('==' in line or '!=' in line):
+                chang_flag = 0
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
-            if has_cv_fz_right(cv, line):
-
-                if '+=' in line:
+            if has_cv_fz_right(cv, line) and chang_flag == 1:
+                tmp_cv = cv
+                # for循环怎么处理？for (j = 0; j < nelements && i < sh.sh_properties  cv需要从nelements==》j
+                if 'for (' in line:
+                    tmp_lines = re.split('[(;]', line)
+                    for tmp_line in tmp_lines:
+                        if '<' in tmp_line or '>' in tmp_line:
+                            if '&&' in tmp_line:
+                                tmp_lines.append(tmp_line.split('&&')[-1])
+                                tmp_line = tmp_line.split('&&')[0]
+                            tmps = re.split('[<>]', tmp_line)
+                            if cv == tmps[-1].strip():
+                                tmp_cv = tmps[0].strip()
+                elif '+=' in line:
                     tmp_cv = line.split('+=')[0].strip()
-                if '|=' in line:
+                elif '|=' in line:
                     tmp_cv = line.split('|=')[0].strip()
                 else:
                     tmp_cv = line.split('=')[0].strip()
                 tmp_cv = left_process(tmp_cv, 'space')  # 对等号左边的变量进行处理(去掉可能存在的类型名等)
-                if tmp_cv not in cv_list[epoch + 1]:
+                if tmp_cv not in cv_list[epoch + 1] and tmp_cv not in cv_list[epoch]:
                     cv_list[epoch + 1].append(tmp_cv)
-                print('CV转化行：', line)
-                print('转换后的CV：', tmp_cv)
+                    print('CV转化行：', line)
+                    print('转换后的CV：', tmp_cv)
     # 当前所有CV都没有匹配到sink点，将其上一级加入到下一次要匹配的CV中cvList[epoch+1]
     if len(sink_results) == 0:
         for cv in cv_list[epoch]:
