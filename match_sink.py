@@ -9,14 +9,15 @@ from sink_CWE22 import sink_22
 from sink_CWE415 import sink_415, sink_416, sink_415_goto
 from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
+from sink_CWE835 import sink_835
 
 cwe = '415'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/415/CVE-2017-18174-25/CVE-2017-18174_CWE-415_251e22abde21833b3d29577e4d8c7aaccd650eee_pinctrl-amd.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/415/CVE-2017-18174-25/slices.txt"
-diff_file = 'E:/漏洞检测/可自动化实现/自动化测试/linux/415/CVE-2017-18174-25/CVE-2017-18174_CWE-415_251e22abde21833b3d29577e4d8c7aaccd650eee_pinctrl-amd.c_1.1.diff'  # 匹配CWE-772、401、415类型时使用
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/415/CVE-2018-7480/CVE-2018-7480_CWE-415_9b54d816e00425c3a517514e0d677bb3cec49258_blk-cgroup.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/415/CVE-2018-7480/slices.txt"
+diff_file = 'E:/漏洞检测/可自动化实现/自动化测试/linux/415/CVE-2018-7480/CVE-2018-7480_CWE-415_9b54d816e00425c3a517514e0d677bb3cec49258_blk-cgroup.c_1.1.diff'  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
@@ -678,7 +679,7 @@ def match_sources(slices, sink_cv):
             else:
                 line_cvs = res_tmp[0].strip().split(',')  # 可能存在多个变量被赋值,例如a, b = recv()
                 # 如果等号左边是变量声明的情况 stellaris_enet_state * s = qemu_get_nic_opaque ( nc )
-                if len(line_cvs[0].split(" ")) > 1:
+                if line_cvs[0] != cv and len(line_cvs[0].split(" ")) > 1:  # 防止 cv含有->但是却被处理
                     line_cvs[0] = left_process(line_cvs[0], 'space')
                     if '*' in line_cvs[0]:
                         tmps = line_cvs[0].split('*')

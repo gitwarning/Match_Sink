@@ -8,8 +8,9 @@ sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
 def has_only_cv(line, cv):
     if (cv + ' ->') in line:  # cv = s, line : bs -> opaque
         lines = line.split(" ")
-        index = lines.index('->')
-        if cv == lines[index - 1]:
+        # index = lines.index('->')
+        # if cv == lines[index - 1]:
+        if cv in lines:
             return False
     if (cv + ' .') in line:
         return False

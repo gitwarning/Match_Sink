@@ -14,6 +14,9 @@ def is_free(line, cv):
 
     if not has_only_cv(line, cv):  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
         return False
+    # 如果当前行是函数定义的话不考虑
+    if 'static' == line.split(' ')[0].strip():
+        return False
     if ('free' in line):
         return True
     elif ('delete' in line):
@@ -99,7 +102,7 @@ def sink_415_goto(diff_file, old_file, sink_cv, sink_results, cv_list, loc):
                 goto_list.append(line)
             elif (goto_state + ':') not in line and line[0] != '\t':
                 break
-    if  goto_list:
+    if goto_list:
         for cv in cv_list[0]:
             free_sink = 0
             for line in goto_list:
