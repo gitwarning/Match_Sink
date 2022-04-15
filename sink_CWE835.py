@@ -1,6 +1,4 @@
-from hashlib import new
 
-from urllib3 import Retry
 from share_func import *
 from sink_CWE772 import get_diff_message
 

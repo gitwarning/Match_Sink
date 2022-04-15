@@ -1,5 +1,4 @@
-from cmath import sin
-import os
+
 from markupsafe import re
 import ast
 
@@ -11,13 +10,13 @@ from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 
-cwe = '415'  # 匹配的漏洞类型
+cwe = '416'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/415/CVE-2018-7480/CVE-2018-7480_CWE-415_9b54d816e00425c3a517514e0d677bb3cec49258_blk-cgroup.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/415/CVE-2018-7480/slices.txt"
-diff_file = 'E:/漏洞检测/可自动化实现/自动化测试/linux/415/CVE-2018-7480/CVE-2018-7480_CWE-415_9b54d816e00425c3a517514e0d677bb3cec49258_blk-cgroup.c_1.1.diff'  # 匹配CWE-772、401、415类型时使用
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/416/CVE-2014-4653/CVE-2014-4653_NVD-CWE-Other_fd9f26e4eca5d08a27d12c0933fceef76ed9663d_control.c_2.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/416/CVE-2014-4653/slices.txt"
+diff_file = 'E:/漏洞检测/可自动化实现/自动化测试/linux/416/CVE-2014-4653/CVE-2014-4653_NVD-CWE-Other_fd9f26e4eca5d08a27d12c0933fceef76ed9663d_control.c_2.1.diff'  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
@@ -718,6 +717,22 @@ def match_sources(slices, sink_cv):
             if has_only_cv(line, tmp_cv) and not has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 如果含有关键变量但不含等号赋值
                 tmp_line = line  # 先暂存当前语句，然后继续向上找
                 print('暂存的语句是: ', tmp_line)
+                if 'for (' in line:
+                    tmp_items = re.split('[(;]', line)
+                    for item in tmp_items:
+                        if '<' in item or '>' in item:
+                            if '&&' in item:
+                                tmp_items.append(item.split('&&')[-1])
+                                item = item.split('&&')[0]
+                            if '->' in item:
+                                item = item.replace('->', '$')
+                            tmps = re.split('[<>]', item)
+                            if cv == tmps[0].strip():
+                                tmp_cv = tmps[-1].strip()
+                                if '$' in tmp_cv:
+                                    tmp_cv = tmp_cv.replace('$', '->')
+                                print('当前语句含有for循环，控制循环次数的变量是：', tmp_cv)
+
             if has_only_cv(line, tmp_cv) and has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 含有等号的赋值
                 # ( avctx -> width * avctx -> bits_per_coded_sample + 7 ) / 8  的值赋值给了CV tmp_cv可能是一个表达式，如何区分出来
                 tmp_cv = re.split('[,;]', line.split(' = ')[-1])[0].strip()  # 取出等号右边的变量，把谁的值赋给了CV，CV=b，继续向上跟踪b
@@ -765,7 +780,8 @@ def match_sources(slices, sink_cv):
                 else:
                     source_results.append(source_next_line)
         else:
-            source_results.append(tmp_line)
+            if not source_results:  # 当source点匹配结果为空，就把暂存的含有cv且不含等号（for循环，函数调用）的行加进去
+                source_results.append(tmp_line)
 
         print(cv, '匹配完成============')
 
