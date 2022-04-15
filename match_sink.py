@@ -5,6 +5,7 @@ import ast
 from sink_CWE119 import sink_119
 from sink_CWE189 import sink_189
 from sink_CWE22 import sink_22
+from sink_CWE369 import sink_369
 from sink_CWE415 import sink_415, sink_416, sink_415_goto
 from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
@@ -14,9 +15,9 @@ cwe = '416'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/416/CVE-2014-4653/CVE-2014-4653_NVD-CWE-Other_fd9f26e4eca5d08a27d12c0933fceef76ed9663d_control.c_2.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/linux/416/CVE-2014-4653/slices.txt"
-diff_file = 'E:/漏洞检测/可自动化实现/自动化测试/linux/416/CVE-2014-4653/CVE-2014-4653_NVD-CWE-Other_fd9f26e4eca5d08a27d12c0933fceef76ed9663d_control.c_2.1.diff'  # 匹配CWE-772、401、415类型时使用
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2017-12877/CVE-2017-12877_CWE-416_04178de2247e353fc095846784b9a10fefdbf890_mat.c_4.0_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2017-12877/slices.txt"
+diff_file = 'E:/漏洞检测/可自动化实现/自动化测试/imagemagick/CVE-2017-12877/CVE-2017-12877_CWE-416_04178de2247e353fc095846784b9a10fefdbf890_mat.c_4.0.diff'  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
@@ -243,6 +244,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
         assert_sink = True
         path_sink = True
         free_sink = 0
+        division_sink = True
+        division_func_sink = True
         # if cwe == '119':
         #     calculation_sink = False
         # elif cwe == '189':
@@ -325,6 +328,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                 free_sink = sink_415(line, cv, sink_results, free_sink, sink_cv, 'slices')
             elif cwe == '416':
                 free_sink = sink_416(line, cv, sink_results, free_sink, sink_cv)
+            elif cwe == '369':
+                division_sink, division_func_sink = sink_369(line, cv, sink_results, division_sink, division_func_sink, sink_cv)
             # if 含等号是判断不是转换
             if 'if' in line and ('==' in line or '!=' in line):
                 chang_flag = 0

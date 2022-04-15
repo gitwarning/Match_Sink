@@ -23,7 +23,9 @@ def is_free(line, cv):
         return True
     elif 'realloc' in line:
         return True
-    elif 'unregister' in line:
+    elif 'unregister' in line:  # 对于linux
+        return True
+    elif 'Destroy' in line:  # 对于imagemagick软件的
         return True
     else:
         return False
@@ -39,6 +41,8 @@ def is_free_old(line, cv):
     elif 'realloc' in line:
         return True
     elif 'unregister' in line:
+        return True
+    elif 'Destroy' in line:  # 对于imagemagick软件的
         return True
     else:
         return False
@@ -65,7 +69,7 @@ def sink_415(line, cv, sink_results, free_sink, sink_cv, sign):
 
 #  UAF类型 对于一个cv找到一次调用free的位置
 def sink_416(line, cv, sink_results, free_sink, sink_cv):
-    if is_free(line, cv) and free_sink < 2:
+    if is_free(line, cv) and free_sink < 3:
         print('sink点是调用free函数：', line)
         sink_results.append(line)
         sink_cv.append(cv)
