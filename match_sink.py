@@ -12,13 +12,13 @@ from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 
-cwe = '369'  # 匹配的漏洞类型
-# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
-# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
-# diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/libtiff/CVE-2016-10267/CVE-2016-10267_CWE-369_43bc256d8ae44b92d2734a3c5bc73957a4d7c1ec_tif_ojpeg.c_2.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/libtiff/CVE-2016-10267/slices.txt"
-diff_file = ''  # 匹配CWE-772、401、415类型时使用
+cwe = '772'  # 匹配的漏洞类型
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/slices.txt'
+diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0.diff'
+# old_file = "E:/漏洞检测/可自动化实现/自动化测试/libtiff/CVE-2016-10267/CVE-2016-10267_CWE-369_43bc256d8ae44b92d2734a3c5bc73957a4d7c1ec_tif_ojpeg.c_2.1_OLD.c"
+# slice_file = "E:/漏洞检测/可自动化实现/自动化测试/libtiff/CVE-2016-10267/slices.txt"
+# diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
@@ -450,7 +450,7 @@ def match_sinks(slices):
             after_diff.append(line)
 
     if cwe == '772' or cwe == '401':
-        sink_772(old_file, sink_results, diff_file, loc)
+        sink_772(old_file, sink_results, diff_file, loc, vul_name)
         for tmp_cv in cv_list[0]:
             sink_cv_tmp = special_cv_process(tmp_cv)
             if (len(sink_cv_tmp) > 1):
