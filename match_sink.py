@@ -1,3 +1,4 @@
+import sys
 
 from markupsafe import re
 import ast
@@ -15,8 +16,8 @@ cwe = '369'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/已分析过漏洞/CWE-772/CWE-772/CVE-2017-11310/CVE-2017-11310_CWE-772_8ca35831e91c3db8c6d281d09b605001003bec08_png.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/ffmpeg/CVE-2018-14395/CVE-2018-14395_CWE-369_fa19fbcf712a6a6cc5a5cfdc3254a97b9bce6582_movenc.c_2.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/ffmpeg/CVE-2018-14395/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/libtiff/CVE-2016-10267/CVE-2016-10267_CWE-369_43bc256d8ae44b92d2734a3c5bc73957a4d7c1ec_tif_ojpeg.c_2.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/libtiff/CVE-2016-10267/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -43,6 +44,9 @@ def is_funcdefine(line):
 # 特殊的cv处理(数组、指针、点操作等)
 # 如果是数组的话，就取数组名，如果是指针的话就加空格
 def special_cv_process(cv):
+    if cv == '':
+        print("===============!!!cv是空的===============")
+        sys.exit(1)
     if (cv[0] == '*'):
         # return cv[1:]
         cv = cv.split('*')[1].strip()
@@ -56,8 +60,10 @@ def special_cv_process(cv):
         start = cv.rfind('[')
         end = cv.rfind(']')
         new_cv_str = cv[(start + 1):end]
+        if new_cv_str == '':
+            cv = cv[:start]
         # 在切分'-'的时候有问题，把减号单独拿出来切分
-        if '->' not in new_cv_str and '-' in new_cv_str:
+        elif '->' not in new_cv_str and '-' in new_cv_str:
             cv = new_cv_str.split('-')
         else:
             cv = re.split('[+|*|/|%|>>|<<|>|<|=]', new_cv_str)  # data [ plane + 4 ] [ end + 3 ]
@@ -255,7 +261,6 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
             array_name = cv[:(cv.find('['))]
             if array_name not in cv_list[epoch]:
                 cv_list[epoch].append(cv[:(cv.find('['))])  # 先把数组头放进去
-
         sp_cv = special_cv_process(cv)  # 特殊变量的处理
         if (len(sp_cv) > 1):
             cv = sp_cv[0]
