@@ -24,8 +24,8 @@ def is_divisin_func(line, cv):
         return False
     if ('alloc' in line):
         return True
-    elif ('mod' in line):
-        return True
+    # elif ('mod' in line):
+    #     return True
     # elif 'realloc' in line:
     #     return True
     # elif 'unregister' in line:  # 对于linux
