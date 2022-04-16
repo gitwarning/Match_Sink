@@ -8,9 +8,17 @@ from share_func import has_only_cv
 
 
 def is_divisin(line, cv):
-    if ('/ ' + cv + ' ') in line:
+    if ('/ ' + cv + ' ->') in line:
+        return False
+    elif ('/ ' + cv + ';') in line:
         return True
-    elif ('% ' + cv) in line:
+    elif ('/ ' + cv + ' ') in line:
+        return True
+    elif ('% ' + cv + ' ->') in line:
+        return False
+    elif ('% ' + cv + ';') in line:
+        return True
+    elif ('% ' + cv + ' ') in line:
         return True
     else:
         return False
@@ -24,8 +32,8 @@ def is_divisin_func(line, cv):
         return False
     if ('alloc' in line):
         return True
-    # elif ('mod' in line):
-    #     return True
+    elif ('JPC_CEILDIV' in line):
+        return True
     # elif 'realloc' in line:
     #     return True
     # elif 'unregister' in line:  # 对于linux

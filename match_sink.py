@@ -1,6 +1,7 @@
 import sys
 
-from markupsafe import re
+# from markupsafe import re
+import re
 import ast
 
 from sink_CWE119 import sink_119
@@ -13,17 +14,17 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '772'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/slices.txt'
-diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0.diff'
-# old_file = "E:/漏洞检测/可自动化实现/自动化测试/libtiff/CVE-2016-10267/CVE-2016-10267_CWE-369_43bc256d8ae44b92d2734a3c5bc73957a4d7c1ec_tif_ojpeg.c_2.1_OLD.c"
-# slice_file = "E:/漏洞检测/可自动化实现/自动化测试/libtiff/CVE-2016-10267/slices.txt"
-# diff_file = ''  # 匹配CWE-772、401、415类型时使用
+cwe = '369'  # 匹配的漏洞类型
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/slices.txt'
+# diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0.diff'
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/369/CVE-2010-4165/CVE-2010-4165_CWE-189_7a1abd08d52fdeddb3e9a5a33f2f15cc6a5674d2_tcp.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/369/CVE-2010-4165/slices.txt"
+diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
-            'uint32_t', 'struct']
+            'uint32_t', 'struct', 'guint']
 # 操作运算符列表
 sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
 
@@ -168,6 +169,8 @@ def left_process(cv, sign):  # 对左边的特殊变量进行空格处理
         return cv
     if sign == 'space' and cv[0] == '*':
         cv = cv.split('*')[1].strip()
+    if sign == 'space' and 'guint' in cv:
+        cv = cv.replace('guint ', '').strip()
     sp1 = cv.find('->')
     sp2 = cv.find('.')
     sp3 = cv.find('[')
