@@ -11,6 +11,7 @@ from sink_CWE415 import sink_415, sink_416, sink_415_goto
 from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
+from sink_CWE476 import sink_476
 
 cwe = '772'  # 匹配的漏洞类型
 old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0_OLD.c'
@@ -252,6 +253,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
         free_sink = 0
         division_sink = True
         division_func_sink = True
+        use_null_sink = True
         # if cwe == '119':
         #     calculation_sink = False
         # elif cwe == '189':
@@ -335,6 +337,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                 free_sink = sink_416(line, cv, sink_results, free_sink, sink_cv)
             elif cwe == '369':
                 division_sink, division_func_sink = sink_369(line, cv, sink_results, division_sink, division_func_sink, sink_cv)
+            elif cwe == '476':
+                use_null_sink = sink_476(line, cv, sink_results, sink_cv, use_null_sink)
             # if 含等号是判断不是转换
             if 'if' in line and ('==' in line or '!=' in line):
                 chang_flag = 0
