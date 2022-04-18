@@ -18,8 +18,8 @@ cwe = '416'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2018-16541/CVE-2018-16541_CWE-416_241d91112771a6104de10b3948c3f350d6690c1d_imain.c_imain.c_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2018-16541/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2016-8674/CVE-2016-8674_CWE-416_1e03c06456d997435019fb3526fa2d4be7dbc6ec_pdf-object.c_pdf-object.c_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2016-8674/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -292,6 +292,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
             if is_return_cv(line, cv):
                 return_flag = True
             # 如果当前行是函数定义行，不参加sink点的匹配，但是可能涉及到sink点的转换（通过参数位置转换
+            if 'void' == line.strip():
+                line = line + " "+ after_diff[i+1]
             if is_funcdefine(line):
                 # 函数定义的上一行不一定是该函数的函数调用行,先判断上一行是否是函数调用行（函数名）获取上一行的信息，
                 # 判断cv是否在函数调用语句的参数中，如果在就记录下来cv的位置（第几个参数）
@@ -402,7 +404,7 @@ def find_first_use(after_diff, cv_list, sink_results, sink_cv, epoch):
     for cv in cv_list[epoch]:
         print("********** "+cv+" *********")
         for line in after_diff:
-            if has_cv(cv, line):
+            if not has_cv_fz_left(cv, line) and has_cv(cv, line):
                 print('第一次使用的位置是: ' + line)
                 sink_results.append(line)
                 sink_cv.append(cv)
