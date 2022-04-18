@@ -74,7 +74,7 @@ def write_to_slices_file(slices_content, diff_message, f_add):
                     add_tmp = num_list[1]
 
                     if(int(this_loc) > (int(start_line) + medium_tmp + add_tmp + 1)):
-                        num_fin = add_tmp
+                        num_fin += add_tmp
                     elif(int(this_loc) >= (int(start_line) + medium_tmp)):
                         is_add_line = True
                         break
@@ -1164,12 +1164,13 @@ if __name__ == "__main__":
                 after_add_del = False
                 medium_num -= (every_num + 1)
 
-                diff_message[start_num] = [medium_num, add_num]
+                diff_message[start_num] = [medium_num, every_num]
 
                 start_num_tmp = int(start_num) + (medium_num + add_num) #新的加减块的开始位置
                 start_num = str(start_num_tmp)
                 # diff_message.setdefault(start_num, []).append([medium_num, add_num])
                 every_num = 0
+                medium_num = 0
             
             medium_num += 1
         
