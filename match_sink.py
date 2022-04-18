@@ -14,12 +14,12 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '369'  # 匹配的漏洞类型
+cwe = '416'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/369/CVE-2018-5804/CVE-2018-5804_CWE-369_9f26ce37f5be86ea11bfc6831366558650b1f6ff_dcraw.c_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/369/CVE-2018-5804/dcraw.c/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2018-16541/CVE-2018-16541_CWE-416_241d91112771a6104de10b3948c3f350d6690c1d_imain.c_imain.c_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2018-16541/slices_add.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -161,6 +161,11 @@ def left_process(cv, sign):  # 对左边的特殊变量进行空格处理
     #     return cv
 
     # 不确定这样改了之后会不会有其他问题（目前好像没发现）
+    if sign == 'space' and len(cv.split(' ')) == 2:
+        type = cv.split(' ')[0]
+        if type in val_type:
+            cv = cv.split(' ')[-1].strip()
+
     if sign == 'space' and 'struct' in cv:
         if '*' in cv:
             cv = cv.split('*')[-1]
@@ -169,6 +174,9 @@ def left_process(cv, sign):  # 对左边的特殊变量进行空格处理
         return cv
     if sign == 'space' and cv[0] == '*':
         cv = cv.split('*')[1].strip()
+    if sign == 'space' and '*' in cv:
+        if len(cv.split('*')) == 2:
+            cv = cv.split('*')[-1].strip()
     if sign == 'space' and 'guint' in cv:
         cv = cv.replace('guint ', '').strip()
     sp1 = cv.find('->')

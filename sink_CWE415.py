@@ -27,6 +27,8 @@ def is_free(line, cv):
         return True
     elif 'Destroy' in line:  # 对于imagemagick软件的
         return True
+    elif 'close' in line:
+        return True
     else:
         return False
 
