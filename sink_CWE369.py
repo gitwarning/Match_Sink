@@ -10,6 +10,8 @@ from share_func import has_only_cv
 def is_divisin(line, cv):
     if ('/ ' + cv + ' ->') in line:
         return False
+    elif ('/ (' + cv + ' ') in line:
+        return True
     elif ('/ ' + cv + ';') in line:
         return True
     elif ('/ ' + cv + ' ') in line:

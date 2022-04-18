@@ -18,8 +18,8 @@ cwe = '369'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/369/CVE-2010-4165/CVE-2010-4165_CWE-189_7a1abd08d52fdeddb3e9a5a33f2f15cc6a5674d2_tcp.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/369/CVE-2010-4165/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/369/CVE-2018-5804/CVE-2018-5804_CWE-369_9f26ce37f5be86ea11bfc6831366558650b1f6ff_dcraw.c_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/369/CVE-2018-5804/dcraw.c/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -247,6 +247,8 @@ def is_return_cv(line, cv):
 def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point_var):
     # 对于每一个cv都去匹配sink点
     for cv in cv_list[epoch]:
+        if cv.isdigit():  # 如果关键变量是常数，直接跳过
+            continue
         array_sink = True
         pointer_sink = True
         risk_func_sink = True
@@ -343,7 +345,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
             elif cwe == '476':
                 use_null_sink = sink_476(line, cv, sink_results, sink_cv, use_null_sink)
             # if 含等号是判断不是转换
-            if 'if' in line and ('==' in line or '!=' in line):
+            if 'if' in line and ('==' in line or '!=' in line or '+=' in line or '<=' in line or '>=' in line):
                 chang_flag = 0
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
             if has_cv_fz_right(cv, line) and chang_flag == 1:
