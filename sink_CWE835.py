@@ -109,15 +109,15 @@ def get_goto_sink_line(vul_content, func_define, start_line):
         location += 1
         forward_line.append(line)
 
-        if(location < start_line):
-            continue
-        
         if(sign and is_funcdefine(line)):#已经到了别的函数
             continue
 
         if(line.replace(' ', '').strip() == func_define):
             sign = True#已经经过了漏洞函数的定义行
-        
+
+        if(location < start_line):
+            continue
+                
         #寻找后面有没有goto语句
         line_tmp = line.strip()
         if(line_tmp[:5] == 'goto '):
@@ -125,6 +125,8 @@ def get_goto_sink_line(vul_content, func_define, start_line):
             if(goto_flag[-1] == ';' or goto_flag[-1] == ',' or goto_flag == '}'):
                 goto_flag = goto_flag[:-1].strip()
                 goto_code = line_tmp
+                goto_loc = location
+                break
     
     if(goto_flag == ''): #该函数不含goto语句
         return '', 0
@@ -188,9 +190,11 @@ def sink_835(old_file, func_define, sink_results, diff_file, loc):
     print(type(loc))
 
     if(res_line == '' and loc == 0):#没有找到循环语句，考虑goto点情况和递归的情况
+        print('将会尝试寻找goto类型循环点')
         res_line, loc = get_goto_sink_line(vul_content, func_define, start_line)
     
     if(res_line == '' and loc == 0):
+        print('将会尝试寻找递归类型循环点')
         res_line, loc = get_recursion_sink_link(vul_content, func_define, start_line)
 
     new_line = res_line + ' location: ' + str(loc)

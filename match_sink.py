@@ -14,13 +14,13 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '416'  # 匹配的漏洞类型
-# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0_OLD.c'
-# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/slices.txt'
-# diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE401/qemu/CVE-2017-9373/CVE-2017-9373_CWE-772_d68f0f778e7f4fbd674627274267f269e40f0b04_ahci.c_4.0.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2016-8674/CVE-2016-8674_CWE-416_1e03c06456d997435019fb3526fa2d4be7dbc6ec_pdf-object.c_pdf-object.c_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2016-8674/slices.txt"
-diff_file = ''  # 匹配CWE-772、401、415类型时使用
+cwe = '835'  # 匹配的漏洞类型
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/ffmpeg/CVE-2017-14058/CVE-2017-14058_CWE-835_7ec414892ddcad88313848494b6fc5f437c9ca4a_hls.c_1.1_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/ffmpeg/CVE-2017-14058/slices.txt'
+diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/ffmpeg/CVE-2017-14058/CVE-2017-14058_CWE-835_7ec414892ddcad88313848494b6fc5f437c9ca4a_hls.c_1.1.diff'
+# old_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2016-8674/CVE-2016-8674_CWE-416_1e03c06456d997435019fb3526fa2d4be7dbc6ec_pdf-object.c_pdf-object.c_OLD.c"
+# slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2016-8674/slices.txt"
+# diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
