@@ -1,4 +1,3 @@
-
 from share_func import *
 from sink_CWE772 import get_diff_message
 
@@ -10,11 +9,16 @@ def is_con(line):
         return True
     elif('do ' in line):
         return True
+    elif(line == 'do'):
+        return True
+    elif(line == 'for'):
+        return True
+    elif(line == 'while'):
+        return True
     
     return False
 
 def get_sink_line(vul_content, func_define, start_line):
-    can_res = False
     func_define = func_define.split('location:')[0].replace(' ', '').strip()
     print('func_define: ', func_define)
     location = 0
@@ -30,7 +34,7 @@ def get_sink_line(vul_content, func_define, start_line):
         
         if(flag == False):
             continue
-        print(line, location)
+        # print(line, location)
 
         if(location > start_line):
             break
@@ -50,10 +54,11 @@ def get_sink_line(vul_content, func_define, start_line):
             cnt -= 1
             sign = True
 
-        if((sign== True) and (cnt <= 0) and (is_con(line[0]))):
+        if((sign== True) and (cnt < 0) and (is_con(line[0]))):
+            print(cnt)
             # print(line, loc)
-            can_res = True
             return line[0].strip(), loc
+    return '', 0
 
 
 def sink_835(old_file, func_define, sink_results, diff_file, loc):
@@ -88,6 +93,6 @@ def sink_835(old_file, func_define, sink_results, diff_file, loc):
     res_line, loc = get_sink_line(vul_content, func_define, start_line)
     print(type(res_line))
     print(type(loc))
-    new_line = res_line + 'location: ' + str(loc)
+    new_line = res_line + ' location: ' + str(loc)
     print(new_line)
     sink_results.append(new_line)

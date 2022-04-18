@@ -4,7 +4,6 @@ import os
 import re
 import pickle as pkl
 import json
-from tkinter.tix import Tree
 #from typing import Counter
 
 def get_filelist(now_dir):
@@ -1562,15 +1561,15 @@ def main():
     f = open('./config.json')   
     path_data = json.load(f)
     
-    # pkl_file_path = path_data['step1_output']['step1_output_tmp_pkl']
-    # txt_file_path = path_data['step1_output']['step1_output_tmp_txt']
-    pkl_file_path = '/Users/wangning/Documents/研一/跨函数测试/code/result_test/step1_result.pkl'
-    txt_file_path = '/Users/wangning/Documents/研一/跨函数测试/code/result_test/step1_result.txt'
+    pkl_file_path = path_data['step1_output']['step1_output_tmp_pkl']
+    txt_file_path = path_data['step1_output']['step1_output_tmp_txt']
+    # pkl_file_path = '/Users/wangning/Documents/研一/跨函数测试/code/result_test/step1_result.pkl'
+    # txt_file_path = '/Users/wangning/Documents/研一/跨函数测试/code/result_test/step1_result.txt'
 
     result_file = open(pkl_file_path,'wb')
     txt_file = open(txt_file_path, mode = 'w+', encoding = 'utf-8')
-    # diff_file_path = path_data['all_test_code']['all_diff_path'] #正常运行
-    diff_file_path = '/Users/wangning/Documents/研一/跨函数测试/code/code_test/'
+    diff_file_path = path_data['all_test_code']['all_diff_path'] #正常运行
+    # diff_file_path = '/Users/wangning/Documents/研一/跨函数测试/code/code_test/'
     
 
     print(diff_file_path)
