@@ -1,6 +1,41 @@
 from share_func import *
 from sink_CWE772 import get_diff_message
+import re
 
+list_key_words = ['if', 'while', 'for']  # 控制结构关键字
+val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
+            'uint32_t', 'struct', 'void', 'static']
+
+def get_funcname(code):
+    # pattern = "((?:_|[A-Za-z])\w*(?:\s(?:\.|::|\->|)\s(?:_|[A-Za-z])\w*)*)\s\("
+    pattern = "((?:_|[A-Za-z])\w*(?:\s(?:\.|::|\->|)\s(?:_|[A-Za-z])\w*)*)\s?\("
+    result = re.findall(pattern, code)
+
+    i = 0
+    while i < len(result):
+        if result[i] in list_key_words:
+            del result[i]
+        else:
+            i += 1
+
+    return result
+
+# 判断是否为函数定义
+def is_funcdefine(line):
+    result = get_funcname(line)
+    if (len(result) == 1):
+        funcname = result[0]
+        res_list = line.split(funcname)
+        # print(res_list)
+        if (res_list[0] != ''):
+            if ('=' not in res_list[0]):
+                for i in val_type:
+                    if(i in res_list[0]):
+                        return True
+        else:
+            return False
+    
+    return False
 
 def is_con(line):
     if('while ' in line):
@@ -61,6 +96,46 @@ def get_sink_line(vul_content, func_define, start_line):
     return '', 0
 
 
+def get_goto_sink_line(vul_content, func_define, start_line):
+    func_define = func_define.split('location:')[0].replace(' ', '').strip()
+    print('func_define: ', func_define)
+    goto_flag = ''
+    goto_code = ''
+    goto_loc = 0
+    location = 0
+    sign = False
+    forward_line = []
+    for line in vul_content:
+        location += 1
+        forward_line.append(line)
+
+        if(location < start_line):
+            continue
+        
+        if(sign and is_funcdefine(line)):#已经到了别的函数
+            continue
+
+        if(line.replace(' ', '').strip() == func_define):
+            sign = True#已经经过了漏洞函数的定义行
+        
+        #寻找后面有没有goto语句
+        line_tmp = line.strip()
+        if(line_tmp[:5] == 'goto '):
+            goto_flag = line_tmp.split('goto ')[-1]
+            if(goto_flag[-1] == ';' or goto_flag[-1] == ',' or goto_flag == '}'):
+                goto_flag = goto_flag[:-1].strip()
+                goto_code = line_tmp
+    
+    if(goto_flag == ''): #该函数不含goto语句
+        return '', 0
+    
+    for line in forward_line:
+        line = line.strip()
+        if(line == goto_flag + ':'):
+            return goto_code, goto_loc
+
+    return '', 0 #只是普通的goto语句，没有构成循环
+
 def sink_835(old_file, func_define, sink_results, diff_file, loc):
     diff_mes = {}
     with open(old_file, 'r') as f:
@@ -93,6 +168,10 @@ def sink_835(old_file, func_define, sink_results, diff_file, loc):
     res_line, loc = get_sink_line(vul_content, func_define, start_line)
     print(type(res_line))
     print(type(loc))
+
+    if(res_line == '' and loc == 0):#没有找到循环语句，考虑goto点情况和递归的情况
+        res_line, loc = get_goto_sink_line(vul_content, func_define, start_line)
+
     new_line = res_line + ' location: ' + str(loc)
     print(new_line)
     sink_results.append(new_line)
