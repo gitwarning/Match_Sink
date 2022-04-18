@@ -136,6 +136,24 @@ def get_goto_sink_line(vul_content, func_define, start_line):
 
     return '', 0 #只是普通的goto语句，没有构成循环
 
+def get_recursion_sink_link(vul_content, func_define, start_line):
+    func_define = func_define.split('location:')[0].strip()
+    vulname = get_funcname(func_define)[0] #获取漏洞函数名
+    location = 0
+
+    for line in vul_content:
+        location += 1
+        if(location < start_line):
+            continue
+
+        res_func = get_funcname(line)
+        if(len(res_func) > 0):
+            for i in res_func:
+                if(i == vulname):
+                    return line.strip(), location
+    
+    return '', 0
+
 def sink_835(old_file, func_define, sink_results, diff_file, loc):
     diff_mes = {}
     with open(old_file, 'r') as f:
@@ -171,6 +189,9 @@ def sink_835(old_file, func_define, sink_results, diff_file, loc):
 
     if(res_line == '' and loc == 0):#没有找到循环语句，考虑goto点情况和递归的情况
         res_line, loc = get_goto_sink_line(vul_content, func_define, start_line)
+    
+    if(res_line == '' and loc == 0):
+        res_line, loc = get_recursion_sink_link(vul_content, func_define, start_line)
 
     new_line = res_line + ' location: ' + str(loc)
     print(new_line)
