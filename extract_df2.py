@@ -1149,12 +1149,12 @@ if __name__ == "__main__":
             if(valid_message == False):
                 continue
 
-            if(line != '' and line[0] == '-'):
+            if(line != '' and line[0] == '-' and line[:2] != '--'):
                 after_add_del = True
                 add_num -= 1
                 every_num -= 1
 
-            if(line != '' and line[0] == '+'):
+            if(line != '' and line[0] == '+' and line[:2] != '++'):
                 after_add_del = True
                 add_num += 1
                 every_num += 1
