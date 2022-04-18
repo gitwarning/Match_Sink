@@ -31,6 +31,11 @@ def write_to_file(file_name, str_output):
 def write_to_slices_file(slices_content, diff_message, f_add):
     flag = False
     kvar = slices_content[0].split(' @@ ')[3]#获取关注点的行号
+    
+    min_start = 99999999
+    for start_line in diff_message.keys():
+        min_start = min(int(start_line), min_start)
+
     for slice_line in slices_content:
         if(slice_line == slices_content[0]):
             slice_line = slice_line.replace('_NEW.c', '_OLD.c')
@@ -1170,9 +1175,6 @@ if __name__ == "__main__":
         
         print(diff_message)
         
-        min_start = 99999999
-        for start_line in diff_message.keys():
-            min_start = min(int(start_line), min_start)
         
         kvar = slice_content[0].split(' @@ ')[3]#获取关注点的行号
         flag = False #记录key_var line有没有出现
