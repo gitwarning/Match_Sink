@@ -80,6 +80,7 @@ def get_diff_message(diff_content):
             start_num = str(start_num_tmp)
             # diff_message.setdefault(start_num, []).append([medium_num, add_num])
             every_num = 0
+            medium_num = 0
         
         medium_num += 1
     
