@@ -196,6 +196,9 @@ def sink_835(old_file, func_define, sink_results, diff_file, loc):
     if(res_line == '' and loc == 0):
         print('将会尝试寻找递归类型循环点')
         res_line, loc = get_recursion_sink_link(vul_content, func_define, start_line)
+    if(res_line == '' and loc == 0):
+        print('没有找到符合的sink点')
+        return
 
     new_line = res_line + ' location: ' + str(loc)
     print(new_line)
