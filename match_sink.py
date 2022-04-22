@@ -14,13 +14,13 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '369'  # 匹配的漏洞类型
-# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/tcpdump/CVE-2017-12997/CVE-2017-12997_CWE-835_34cec721d39c76be1e0a600829a7b17bdfb832b6_print-lldp.c_print-lldp.c_OLD.c'
-# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/tcpdump/CVE-2017-12997/slices.txt'
-# diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/tcpdump/CVE-2017-12997/CVE-2017-12997_CWE-835_34cec721d39c76be1e0a600829a7b17bdfb832b6_print-lldp.c.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/369/CVE-2017-11464/CVE-2017-11464_CWE-369_ecf9267a24b2c3c0cd211dbdfa9ef2232511972a_rsvg-filter.c_rsvg-filter.c_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/369/CVE-2017-11464/slices.txt"
-diff_file = ''  # 匹配CWE-772、401、415类型时使用
+cwe = '835'  # 匹配的漏洞类型
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/slices.txt'
+diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
+# old_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2016-8674/CVE-2016-8674_CWE-416_1e03c06456d997435019fb3526fa2d4be7dbc6ec_pdf-object.c_pdf-object.c_OLD.c"
+# slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2016-8674/slices.txt"
+# diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
@@ -458,6 +458,7 @@ def match_sinks(slices):
         if (vul_name[0] == '*'):
             vul_name = vul_name[1:]
     after_diff = []
+    is_add = False
     # 找到diff修改的位置，将diff修改位置向下的切片加入到after_diff[]
     for line in slices:
         this_loc = line[line.find('location: '):line.rfind(' file')].replace('location: ', '')  # 当前切片的行号
@@ -465,6 +466,7 @@ def match_sinks(slices):
         if flag == 0:
             if '(key_var lines)' in line:  # 含有(key_var lines)标志的表明当前行是diff修改的下一行,因为在diff只增加的类型中在漏洞文件中找不到修改行
                 flag = 1
+                is_add = True
             if this_loc == loc and this_file == vul_file:
                 flag = 1
         if flag == 1:
@@ -489,7 +491,7 @@ def match_sinks(slices):
         while(slices[idx].strip()[-2:] != '.c'):
             idx += 1
             vul_define += slices[idx].strip('\n')
-        sink_835(old_file, vul_define, sink_results, diff_file, loc)
+        sink_835(old_file, vul_define, sink_results, diff_file, loc, is_add)
         for tmp_cv in cv_list[0]:
             sink_cv_tmp = special_cv_process(tmp_cv)
             if (len(sink_cv_tmp) > 1):

@@ -73,6 +73,9 @@ def get_sink_line(vul_content, func_define, start_line):
 
         if(location > start_line):
             break
+        if(location == start_line):
+            if(is_con(line.strip())):
+                return line.strip(), location
 
         will_be_cal.append([line.strip(), location])
     will_be_cal.reverse()
@@ -110,7 +113,7 @@ def get_goto_sink_line(vul_content, func_define, start_line):
         forward_line.append(line)
 
         if(sign and is_funcdefine(line)):#已经到了别的函数
-            continue
+            break
 
         if(line.replace(' ', '').strip() == func_define):
             sign = True#已经经过了漏洞函数的定义行
@@ -142,9 +145,22 @@ def get_recursion_sink_link(vul_content, func_define, start_line):
     func_define = func_define.split('location:')[0].strip()
     vulname = get_funcname(func_define)[0] #获取漏洞函数名
     location = 0
+    sign = False
 
     for line in vul_content:
+        line_tmp = line.replace(' ', '').strip()
+        func_define_tmp = func_define.replace(' ', '').strip()
         location += 1
+
+        if(sign and is_funcdefine(line)):#已经到了别的函数
+            print(line)
+            break
+
+        if(line_tmp == func_define_tmp):
+            sign = True#已经经过了漏洞函数的定义行
+        elif(line_tmp != '' and line_tmp in func_define_tmp and line_tmp[-1] == ','):#函数定义行被分行写的情况
+            sign = True
+
         if(location < start_line):
             continue
 
@@ -156,7 +172,7 @@ def get_recursion_sink_link(vul_content, func_define, start_line):
     
     return '', 0
 
-def sink_835(old_file, func_define, sink_results, diff_file, loc):
+def sink_835(old_file, func_define, sink_results, diff_file, loc, is_add):
     diff_mes = {}
     with open(old_file, 'r') as f:
         vul_content = f.readlines()
@@ -164,37 +180,40 @@ def sink_835(old_file, func_define, sink_results, diff_file, loc):
     with open(diff_file, 'r') as f:
         diff_content = f.readlines()
 
-    num_fin = 0
-    diff_mes = get_diff_message(diff_content)
+    if(is_add == False):#如果不是仅有加号行的文件,标记行号就是修改行号
+        start_line = int(loc)
+    else:
+        num_fin = 0
+        diff_mes = get_diff_message(diff_content)
 
-    for start_line in diff_mes.keys():
-        num_list = diff_mes[start_line]
-        medium_tmp = num_list[0]
-        add_tmp = num_list[1]
-                                    
-        if(int(loc) > (int(start_line) + medium_tmp + add_tmp + 1)):
-            num_fin = add_tmp
-        elif(int(loc) >= (int(start_line) + medium_tmp)):#说明是在加号块中间的一句
-            already_num = int(loc) - (int(start_line) + medium_tmp + 1)
-            print(already_num, loc, start_line, medium_tmp)
-            num_fin += already_num
-            break
-                
-    print(loc, num_fin)
-    start_line = int(loc) - num_fin
+        for start_line in diff_mes.keys():
+            num_list = diff_mes[start_line]
+            medium_tmp = num_list[0]
+            add_tmp = num_list[1]
+                                        
+            if(int(loc) > (int(start_line) + medium_tmp + add_tmp + 1)):
+                num_fin = add_tmp
+            elif(int(loc) >= (int(start_line) + medium_tmp)):#说明是在加号块中间的一句
+                already_num = int(loc) - (int(start_line) + medium_tmp + 1)
+                print(already_num, loc, start_line, medium_tmp)
+                num_fin += already_num
+                break
+                    
+        print(loc, num_fin)
+        start_line = int(loc) - num_fin
 
-    print('将会从 ' + str(start_line) + '向上找sink点') # 寻找循环头所在的地方，这一行可能就是循环头
+    print('将会从 ' + str(start_line) + '向上找循环') # 寻找循环头所在的地方，这一行可能就是循环头
 
     res_line, loc = get_sink_line(vul_content, func_define, start_line)
     print(type(res_line))
     print(type(loc))
 
     if(res_line == '' and loc == 0):#没有找到循环语句，考虑goto点情况和递归的情况
-        print('将会尝试寻找goto类型循环点')
+        print('将会尝试从' + str(start_line) + '向下寻找goto类型循环点')
         res_line, loc = get_goto_sink_line(vul_content, func_define, start_line)
     
     if(res_line == '' and loc == 0):
-        print('将会尝试寻找递归类型循环点')
+        print('将会尝试从' + str(start_line) + '向下寻找递归类型循环点')
         res_line, loc = get_recursion_sink_link(vul_content, func_define, start_line)
     if(res_line == '' and loc == 0):
         print('没有找到符合的sink点')
