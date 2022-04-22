@@ -14,17 +14,17 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '835'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/tcpdump/CVE-2017-12997/CVE-2017-12997_CWE-835_34cec721d39c76be1e0a600829a7b17bdfb832b6_print-lldp.c_print-lldp.c_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/tcpdump/CVE-2017-12997/slices.txt'
-diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/tcpdump/CVE-2017-12997/CVE-2017-12997_CWE-835_34cec721d39c76be1e0a600829a7b17bdfb832b6_print-lldp.c.diff'
-# old_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2016-8674/CVE-2016-8674_CWE-416_1e03c06456d997435019fb3526fa2d4be7dbc6ec_pdf-object.c_pdf-object.c_OLD.c"
-# slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2016-8674/slices.txt"
-# diff_file = ''  # 匹配CWE-772、401、415类型时使用
+cwe = '369'  # 匹配的漏洞类型
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/tcpdump/CVE-2017-12997/CVE-2017-12997_CWE-835_34cec721d39c76be1e0a600829a7b17bdfb832b6_print-lldp.c_print-lldp.c_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/tcpdump/CVE-2017-12997/slices.txt'
+# diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/tcpdump/CVE-2017-12997/CVE-2017-12997_CWE-835_34cec721d39c76be1e0a600829a7b17bdfb832b6_print-lldp.c.diff'
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/369/CVE-2017-11464/CVE-2017-11464_CWE-369_ecf9267a24b2c3c0cd211dbdfa9ef2232511972a_rsvg-filter.c_rsvg-filter.c_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/369/CVE-2017-11464/slices.txt"
+diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
-            'uint32_t', 'struct', 'guint']
+            'uint32_t', 'struct', 'guint', 'size_t', 'uint32_t']
 # 操作运算符列表
 sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
 
@@ -226,7 +226,7 @@ def get_funcname(code):
 
 # cv在等号右边（赋值给别人）
 def has_cv_fz_right(cv, line):
-    if ('=' not in line):
+    if (' = ' not in line):
         return False
     if '"' in line:  # av_log ( s , AV_LOG_WARNING , "par->codec_type is type = [%d]\n" , par -> codec_type )
         tmp = line.split('"')
@@ -255,7 +255,7 @@ def is_return_cv(line, cv):
 def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point_var):
     # 对于每一个cv都去匹配sink点
     for cv in cv_list[epoch]:
-        if cv.isdigit():  # 如果关键变量是常数，直接跳过
+        if cv.isdigit() or cv.isupper():  # 如果关键变量是常数，直接跳过
             continue
         array_sink = True
         pointer_sink = True
@@ -284,7 +284,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                     cv_list[epoch].append(sp_cv[i])
         else:
             cv = sp_cv[0]
-
+        if cv.isupper():  # 如果cv全是大写，一般是宏定义的常数，这种也跳过
+            continue
         print("=======now CV is " + cv + "=========")
         # 找到diff修改的行，从diff修改行向下寻找sink点
         for i, line in enumerate(after_diff):
@@ -355,7 +356,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
             elif cwe == '476':
                 use_null_sink = sink_476(line, cv, sink_results, sink_cv, use_null_sink)
             # if 含等号是判断不是转换
-            if 'if' in line and ('==' in line or '!=' in line or '+=' in line or '<=' in line or '>=' in line):
+            # if 'if' in line and ('==' in line or '!=' in line or '+=' in line or '<=' in line or '>=' in line):
+            if 'if ' in line:  #涉及if条件语句行不转换
                 chang_flag = 0
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
             if has_cv_fz_right(cv, line) and chang_flag == 1:

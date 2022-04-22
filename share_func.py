@@ -56,13 +56,15 @@ def is_risk_func(line, cv):
         return True
     elif ('memset' in line):
         return True
+    elif 'strncpy' in line:
+        return True
     elif ('bytestream2_get_buffer' in line):
         return True
     elif ('get_bits' in line):
         return True
     elif ('put_bits' in line):
         return True
-    elif ('copy' in line):
+    elif ('copy' in line) and 'copy_size' not in line:
         return True
     elif ('recv' in line and 'recv ->' not in line):
         return True
