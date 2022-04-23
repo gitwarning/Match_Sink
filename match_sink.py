@@ -14,17 +14,18 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '835'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/slices.txt'
-diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-# old_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2016-8674/CVE-2016-8674_CWE-416_1e03c06456d997435019fb3526fa2d4be7dbc6ec_pdf-object.c_pdf-object.c_OLD.c"
-# slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CWE-416/CVE-2016-8674/slices.txt"
-# diff_file = ''  # 匹配CWE-772、401、415类型时使用
+cwe = '119'  # 匹配的漏洞类型
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/slices.txt'
+# diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/李雅婷学姐/qemu/CVE-2014-0145 (3)/CVE-2014-0145_CWE-119_c05e4667be91b46ab42b5a11babf8e84d476cc6b_qcow2-snapshot.c_2.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/李雅婷学姐/qemu/CVE-2014-0145 (3)/slices.txt"
+diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
-            'uint32_t', 'struct', 'guint', 'size_t', 'uint32_t']
+            'uint32_t', 'struct', 'guint', 'size_t', 'uint64_t']
+C_func = ['sizeof']
 # 操作运算符列表
 sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
 
@@ -626,7 +627,7 @@ def is_expression(cv):
     # ( PhotoshopProfile * ) user_data
     if '*' in cv:
         tmps = cv.split(" ")
-        if not tmps[tmps.index('*')-1].islower():
+        if tmps[tmps.index('*')-1].isalpha() and not tmps[tmps.index('*')-1].islower():
             return False
     cvs = re.split('[*+/-]', cv)
 
@@ -637,6 +638,33 @@ def is_expression(cv):
         return False
 
 
+def cv_from_expression(tmp_cv):
+    # 对于一个表达式，考虑用空格把变量拆分出来，拆出来之前需要把-> . 不应该拆分的先替换掉
+    if '->' in tmp_cv:
+        tmp_cv = tmp_cv.replace(" -> ", "$")
+    if '.' in tmp_cv:
+        tmp_cv = tmp_cv.replace(' . ', '@')
+    if '[' in tmp_cv and ']' in tmp_cv:
+        tmp_cv = tmp_cv.replace(' [ ', '#')
+        tmp_cv = tmp_cv.replace(' ]', '^')
+    tmp_cvs = tmp_cv.split(' ')
+    cvs = []
+    for cv in tmp_cvs:
+        if len(cv.strip()) > 1:
+            if '0x' in cv:
+                continue
+            if cv in val_type or cv in C_func:
+                continue
+            if '@' in cv:
+                cv = cv.replace('@', ' . ')
+            if '$' in cv:
+                cv = cv.replace('$', ' -> ')
+            if '#' in cv and '^':
+                # cv = cv.replace('#', ' [ ')
+                # cv = cv.replace('^', ' ]')
+                cv = cv.split('#')[0].strip()  # 只要数组名
+            cvs.append(cv)
+    return cvs
 def match_sources(slices, sink_cv):
     print('.......................source is start.......................')
     source_results = []
@@ -679,13 +707,24 @@ def match_sources(slices, sink_cv):
 
     if (vul_function in slices[1]):
         vulf_define = slices[1].strip()
-
         if ('location' not in slices[1]):
-            vulf_define = slices[1].strip() + slices[2].strip()
+            # vulf_define = slices[1].strip() + slices[2].strip()
+            for line in slices[2:10]:
+                if 'location' not in line:
+                    vulf_define += line.strip()
+                else:
+                    vulf_define += line.strip()
+                    break
     elif vul_function in slices[2]:
         vulf_define = slices[1].strip() + slices[2].strip()
         if 'location' not in slices[2]:
-            vulf_define += slices[3]
+            for line in slices[3:10]:
+                if 'location' not in line:
+                    vulf_define += line.strip()
+                else:
+                    vulf_define += line.strip()
+                    break
+
     # # cvs = eval(slices[0].split(' ')[-1])
     # start = slices[0].find('[')
     # end = slices[0].rfind(']')
@@ -705,11 +744,21 @@ def match_sources(slices, sink_cv):
     #开始针对每一个sink_cv匹配source点
     for cv in sink_cv:
         num = len(source_results)
+        change_cv_flag = 0   # 标志此cv是否由表达式转换来的cv
+        change_line = 0
+        if '$$' in cv:
+            change_cv_flag = 1
+            change_line_index = int(cv.split('$$')[-1])
+            cv = cv.split('$$')[0]
         print('now, is ' + cv)
         # 从sink_cv得到的关键变量不需要再一次的特殊处理
         # 寻找外部函数定义处
         flag = 0
-        for line in source_lines:
+        tmp_source_lines = source_lines  # 如果是表达式转换后的cv需要从转换行开始寻找source点
+        if change_cv_flag == 1:
+            tmp_source_lines = source_lines[change_line_index:]
+        # for line in source_lines:
+        for line in tmp_source_lines:
             res_tmp = line.split('=')
             if (len(res_tmp) == 1):
                 continue
@@ -728,9 +777,10 @@ def match_sources(slices, sink_cv):
                 if (cv in line_cvs):
                     fucnname = get_funcname(line)
                     if fucnname:  # 如果是外部函数
-                        source_results.append(line)
-                        flag = 1
-                        break
+                        if len(fucnname)==1 and fucnname[0] not in C_func:
+                            source_results.append(line)
+                            flag = 1
+                            break
                         # return source_results
         if (flag == 1):
             print('外部函数定义')
@@ -749,12 +799,12 @@ def match_sources(slices, sink_cv):
         '''
         tmp_cv = cv
         tmp_line = ''
-        for line in source_lines:
+        for i, line in enumerate(tmp_source_lines):
             # 在找source点时如果当前行是对cv的成员赋值，不可以将此视为cv的赋值
             # 不能把切片的第一行信息行作为source点（尽管它可能含有cv）
             if has_only_cv(line, tmp_cv) and not has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 如果含有关键变量但不含等号赋值
                 tmp_line = line  # 先暂存当前语句，然后继续向上找
-                print('暂存的语句是: ', tmp_line)
+                print('含有关键变量但cv不在等号左边,暂存的语句是: ', tmp_line)
                 if 'for (' in line:
                     tmp_items = re.split('[(;]', line)
                     for item in tmp_items:
@@ -776,17 +826,26 @@ def match_sources(slices, sink_cv):
                 tmp_cv = re.split('[,;]', line.split(' = ')[-1])[0].strip()  # 取出等号右边的变量，把谁的值赋给了CV，CV=b，继续向上跟踪b
                 #处理强制类型转换profile = ( PhotoshopProfile * ) user_data;
                 if tmp_cv[0] == '(':
-                    tmp_cv = tmp_cv[tmp_cv.find(')')+1:].strip()
+                    if len(tmp_cv[:tmp_cv.find(')')].split(' ')) > 1:
+                        tmp_cv = tmp_cv
+                    else:
+                        tmp_cv = tmp_cv[tmp_cv.find(')')+1:].strip()
+                # 对于表达式赋值的情况，需要继续向上跟踪
                 if is_expression(tmp_cv):
+                    change_cvs = cv_from_expression(tmp_cv)
+                    change_cvs = list(set(change_cvs))  # 对从表达式中得到的cv去重
+                    for change in change_cvs:
+                        change = change + '$$' + str(i)
+                        sink_cv.append(change)
                     flag = 2
-                    source_results.append(line)
                     break
                 else:
                     tmp_line = line
                     print(tmp_cv, '的值赋值给了CV')
-                    print('暂存的语句2是: ', tmp_line)
+                    print('转换的行是: ', tmp_line)
         if flag == 2:
-            print("CV是由多个变量共同确定，将此行定位source点：", line)
+            print("CV是表达式赋值的，此行后将继续向上跟踪转换后的多个cv", line)
+            print("拆分出的多个cv是：", change_cvs)
             continue
 
         print(tmp_cv, '是CV最开始赋值的变量。经过变量转换后，CV最终是由', tmp_line)
