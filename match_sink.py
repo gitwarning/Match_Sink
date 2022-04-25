@@ -14,12 +14,12 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '119'  # 匹配的漏洞类型
+cwe = '125'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/李雅婷学姐/qemu/CVE-2014-0145 (3)/CVE-2014-0145_CWE-119_c05e4667be91b46ab42b5a11babf8e84d476cc6b_qcow2-snapshot.c_2.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/李雅婷学姐/qemu/CVE-2014-0145 (3)/slices.txt"
+old_file = "E:/漏洞检测\可自动化实现/16_Typedata/16_Typedata/Diff_NEW_OLD/freetype2/CVE-2014-9658/CVE-2014-9658_CWE-125_f70d9342e65cd2cb44e9f26b6d7edeedf191fc6c_ttkern.c_ttkern.c_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -724,7 +724,16 @@ def match_sources(slices, sink_cv):
                 else:
                     vulf_define += line.strip()
                     break
-
+    else:  # 存在没有找到函数名的情况这种情况下函数定义可能还在第一行
+        vulf_define = slices[1].strip()
+        if ('location' not in slices[1]):
+            # vulf_define = slices[1].strip() + slices[2].strip()
+            for line in slices[2:10]:
+                if 'location' not in line:
+                    vulf_define += line.strip()
+                else:
+                    vulf_define += line.strip()
+                    break
     # # cvs = eval(slices[0].split(' ')[-1])
     # start = slices[0].find('[')
     # end = slices[0].rfind(']')
