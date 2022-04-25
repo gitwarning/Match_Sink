@@ -227,7 +227,7 @@ def get_funcname(code):
 
 # cv在等号右边（赋值给别人）
 def has_cv_fz_right(cv, line):
-    if (' = ' not in line):
+    if '>=' in line or '<=' in line or '==' in line or '!=' in line or '= ' not in line:
         return False
     if '"' in line:  # av_log ( s , AV_LOG_WARNING , "par->codec_type is type = [%d]\n" , par -> codec_type )
         tmp = line.split('"')
