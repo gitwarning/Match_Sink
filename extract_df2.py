@@ -1077,8 +1077,9 @@ if __name__ == "__main__":
 
                     #去掉重复的关注行
                     for node_back in results_back:
-                        if(node_back in results_for):
-                            results_back.remove(node_back)
+                        for node_for in results_for:
+                            if(node_back['name'] == node_for['name']):
+                                results_back.remove(node_back)
                     
                     layer = 2
                     cnt = 1
