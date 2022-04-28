@@ -5,6 +5,8 @@ import re
 import pickle as pkl
 import json
 #from typing import Counter
+val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
+            'uint32_t', 'struct', 'guint', 'size_t', 'uint64_t']
 
 def get_filelist(now_dir):
     Filelist = []
@@ -450,13 +452,20 @@ def judge_type(s):
         # res2_1 = pat2_1.findall(s)
         res2_1 = get_funcname(s)
         
-        if(len(res2_1) > 0): #函数调用类型或者是函数声明
-            if(len(res2_1) > 1): #解析出了多个函数名，这种情况只会在函数调用中出现
+        if(len(res2_1) > 0): #函数调用类型或者是函数声明或是函数头
+            if(len(res2_1) == 1):
+                funcname = res2_1[0]
+                return_type = s.split(funcname)
+                for vt in val_type:
+                    if(return_type[0].find(vt) != -1):
+                        if(s[-1] == ';'): #函数调用前面有返回值类型，且该行以分号结尾
+                            return "Fun-Declaration"
+                        else:
+                            return "Fun-Head"
                 return "Fun-Call"
-            elif(s[-1] == ';'):
-                return "Fun-Declaration"
             else:
-                return "Fun-Head"
+                return "Fun-Call"
+            
             # tmp = s[:s.find('(')].replace('+', '',1).replace('-', '',1).split(' ')
             # tmp = [i for i in tmp if i != ''] # 去除空
             # print(tmp)
