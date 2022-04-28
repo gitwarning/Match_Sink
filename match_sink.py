@@ -14,12 +14,12 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '119'  # 匹配的漏洞类型
+cwe = '125'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/自动化测试/CVE-2013-4533/CVE-2013-4533/CVE-2013-4533_CWE-119_caa881abe0e01f9931125a0977ec33c5343e4aa7_pxa2xx.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CVE-2013-4533/CVE-2013-4533/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/CVE-2016-10028/CVE-2016-10028_CWE-125_abd7f08b2353f43274b785db8c7224f082ef4d31_virtio-gpu-3d.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CVE-2016-10028/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -389,6 +389,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                 else:
                     tmp_cv = line.split('=')[0].strip()
                 tmp_cv = left_process(tmp_cv, 'space')  # 对等号左边的变量进行处理(去掉可能存在的类型名等)
+                if ', ' in tmp_cv:  # x++, guest_ptr += cmp_bytes, server_ptr += cmp_bytes)
+                    tmp_cv = tmp_cv.split(', ')[-1]
                 if tmp_cv not in cv_list[epoch + 1] and tmp_cv not in cv_list[epoch]:
                     cv_list[epoch + 1].append(tmp_cv)
                     print('CV转化行：', line)
@@ -792,9 +794,11 @@ def match_sources(slices, sink_cv):
                             line_cvs[0] = tmps[-1].strip()  # int * buf
 
                 if (cv in line_cvs):
-                    fucnname = get_funcname(line)
-                    if fucnname:  # 如果是外部函数
-                        if len(fucnname)==1 and fucnname[0] not in C_func:
+                    funcname = get_funcname(line)
+                    if funcname:  # 如果是外部函数
+                        if 'sizeof' in funcname:
+                            funcname.remove('sizeof')
+                        if len(funcname) == 1 and funcname[0] not in C_func:
                             source_results.append(line)
                             flag = 1
                             break
