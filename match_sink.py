@@ -14,12 +14,12 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '125'  # 匹配的漏洞类型
+cwe = '119'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-old_file = "E:/漏洞检测\可自动化实现/16_Typedata/16_Typedata/Diff_NEW_OLD/freetype2/CVE-2014-9658/CVE-2014-9658_CWE-125_f70d9342e65cd2cb44e9f26b6d7edeedf191fc6c_ttkern.c_ttkern.c_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/自动化测试/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/自动化测试/CVE-2013-4533/CVE-2013-4533/CVE-2013-4533_CWE-119_caa881abe0e01f9931125a0977ec33c5343e4aa7_pxa2xx.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CVE-2013-4533/CVE-2013-4533/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -361,6 +361,9 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
             if 'if ' in line:  #涉及if条件语句行不转换
                 chang_flag = 0
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
+            if 'for ' in line:
+                if '->' in line and ' -> ' not in line:
+                    line = line.replace('->', ' -> ')
             if has_cv_fz_right(cv, line) and chang_flag == 1:
                 tmp_cv = cv
                 # for循环怎么处理？for (j = 0; j < nelements && i < sh.sh_properties  cv需要从nelements==》j
@@ -371,8 +374,13 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                             if '&&' in tmp_line:
                                 tmp_lines.append(tmp_line.split('&&')[-1])
                                 tmp_line = tmp_line.split('&&')[0]
+                            if '->' in tmp_line:
+                                tmp_line = tmp_line.replace(' -> ', '$')
                             tmps = re.split('[<>]', tmp_line)
-                            if cv == tmps[-1].strip():
+                            tmp_last = tmps[-1].strip()
+                            if '$' in tmp_last:
+                                tmp_last = tmp_last.replace('$', ' -> ')
+                            if cv == tmp_last:
                                 tmp_cv = tmps[0].strip()
                 elif '+=' in line:
                     tmp_cv = line.split('+=')[0].strip()
