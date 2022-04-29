@@ -357,9 +357,12 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
     vulnline_row = 0
     list_write2file = []
     point_var_list = []
-    vulfunc_id = list_result[0]['functionId']#第一句肯定是漏洞函数的开头
+    vulfunc_id = list_result[0] #切片第一句肯定是漏洞函数的开头节点信息
+    vulfunc_id = vulfunc_id[0]['functionId']
 
-    for node in list_result:
+    for node_all in list_result:
+        node = node_all[0] #节点信息
+        node_layer = str(node_all[1])
         if((node['filepath'][-5:] == 'OLD.c') or (node['filepath'][-5:] == 'NEW.c')):
             s_tmp = node['filepath'].split('_')
             index = 3
@@ -380,14 +383,14 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
 
             new_code = ""
             if code.find("#define") != -1:
-                list_write2file.append(code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+                list_write2file.append(code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                 continue
 
             while (len(code) >= 1 and code[-1] != ')' and code[-1] != '{'):
                 if code.find('{') != -1:
                     index = code.index('{')
                     new_code += code[:index].strip()
-                    list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+                    list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                     break
 
                 else:
@@ -401,10 +404,10 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
                 new_code = new_code.strip()
                 if new_code[-1] == '{':
                     new_code = new_code[:-1].strip()
-                    list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+                    list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                     #list_line.append(str(raw+1))
                 else:
-                    list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+                    list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                     #list_line.append(str(raw+1))
 
         elif node['type'] == 'Condition':
@@ -429,7 +432,7 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
                         if code.find('{') != -1:
                             index = code.index('{')
                             new_code += code[:index].strip()
-                            list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+                            list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                             #list_line.append(str(raw+1))
                             list_for_line.append(raw)
                             break
@@ -445,13 +448,13 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
                         new_code = new_code.strip()
                         if new_code[-1] == '{':
                             new_code = new_code[:-1].strip()
-                            list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+                            list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                             #list_line.append(str(raw+1))
                             list_for_line.append(raw)
 
                         else:
                             list_for_line.append(raw)
-                            list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+                            list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                             #list_line.append(str(raw+1))
 
                 else:
@@ -462,7 +465,7 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
 
                     elif res != 'for':
                         new_code = res + ' ( ' + node['code'] + ' ) '
-                        list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+                        list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                         #list_line.append(str(raw+1))
 
                     else:
@@ -474,14 +477,14 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
                             if code.find('{') != -1:
                                 index = code.index('{')
                                 new_code += code[:index].strip()
-                                list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+                                list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                                 #list_line.append(str(raw+1))
                                 list_for_line.append(raw)
                                 break
 
                             elif code[-1] == ';' and code[:-1].count(';') >= 2:
                                 new_code += code
-                                list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+                                list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                                 #list_line.append(str(raw+1))
                                 list_for_line.append(raw)
                                 break
@@ -497,13 +500,13 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
                             new_code = new_code.strip()
                             if new_code[-1] == '{':
                                 new_code = new_code[:-1].strip()
-                                list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+                                list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                                 #list_line.append(str(raw+1))
                                 list_for_line.append(raw)
 
                             else:
                                 list_for_line.append(raw)
-                                list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+                                list_write2file.append(new_code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                                 #list_line.append(str(raw+1))
         
         elif node['type'] == 'Label':
@@ -512,7 +515,7 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
             f2.close()
             raw = int(node['location'].split(':')[0])-1
             code = content[raw].strip()
-            list_write2file.append(code + ' location: ' + str(raw+1) + ' file: ' + file_name + '\n')
+            list_write2file.append(code + ' location: ' + str(raw+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
             #list_line.append(str(raw+1))
 
         elif node['type'] == 'ForInit':
@@ -527,9 +530,9 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
                     pit_var = pit_var[:-1]
                 point_var_list.append(pit_var)
 
-            if list_result[0]['type'] != 'Function':
+            if list_result[0][0]['type'] != 'Function':
                 row = node['location'].split(':')[0]
-                list_write2file.append(node['code'] + ' location: ' + str(row) + ' file: ' + file_name + '\n')
+                list_write2file.append(node['code'] + ' location: ' + str(row) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                 #list_line.append(row)
             else:
                 continue
@@ -565,10 +568,10 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
                         break
                 code2 = ' '.join(list_code2)
 
-                list_write2file.append(code1 + ' location: ' + str(raw+1) + '\n' + code2 + ' location: ' + str(raw+2) + ' file: ' + file_name + '\n')
+                list_write2file.append(code1 + ' location: ' + str(raw+1) + '\n' + code2 + ' location: ' + str(raw+2) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
 
             else:
-                list_write2file.append(node['code'] + ' location: ' + node['location'].split(':')[0] + ' file: ' + file_name + '\n')
+                list_write2file.append(node['code'] + ' location: ' + node['location'].split(':')[0] + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
 
         elif node['type'] == 'ExpressionStatement':
             row = int(node['location'].split(':')[0])-1
@@ -576,18 +579,18 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
                 continue
 
             if node['code'] in ['\n', '\t', ' ', '']:
-                list_write2file.append(node['code'] + ' location: ' + str(row+1) + ' file: ' + file_name + '\n')
+                list_write2file.append(node['code'] + ' location: ' + str(row+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                 #list_line.append(row+1)
             elif node['code'].strip()[-1] != ';':
-                list_write2file.append(node['code'] + '; location: ' + str(row+1) + ' file: ' + file_name + '\n')
+                list_write2file.append(node['code'] + '; location: ' + str(row+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                 #list_line.append(row+1)
             else:
-                list_write2file.append(node['code'] + ' location: ' + str(row+1) + ' file: ' + file_name + '\n')
+                list_write2file.append(node['code'] + ' location: ' + str(row+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                 #list_line.append(row+1)
 
         elif node['type'] == "Statement":
             row = node['location'].split(':')[0]
-            list_write2file.append(node['code'] + ' location: ' + str(row) + ' file: ' + file_name + '\n')
+            list_write2file.append(node['code'] + ' location: ' + str(row) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
             #list_line.append(row+1)
 
         else:         
@@ -603,7 +606,7 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
                 continue
 
             else:
-                list_write2file.append(node['code'] + ' location: ' + str(row+1) + ' file: ' + file_name + '\n')
+                list_write2file.append(node['code'] + ' location: ' + str(row+1) + ' file: ' + file_name + ' cross_layer: ' + node_layer + '\n')
                 #list_line.append(str(row+1))
 
     f = open(store_filepath, 'a')
@@ -1064,21 +1067,21 @@ if __name__ == "__main__":
                         #startline = list_startnode_tmp[0]['location'].split(':')[0]
                         #startline_path = list_startnode_tmp[0]['filepath']
 
-                    results_back = program_slice_backwards(pdg, list_startnode) #从关注点开始向上切片
-                    print("results_back: ")
-                    print(results_back)
+                    results_back = program_slice_backwards(pdg, list_startnode, 1) #从关注点开始向上切片
+                    # print("results_back: ")
+                    # print(results_back)
                     for node_back in results_back:
-                        if(node_back['name'] == str(node_id)):
+                        if(node_back[0]['name'] == str(node_id)):
                             results_back.remove(node_back)
                     
-                    results_for = program_slice_forward(pdg, list_startnode) #从关注点开始向下切片
-                    print("results_for:")
-                    print(results_for)
+                    results_for = program_slice_forward(pdg, list_startnode, 1) #从关注点开始向下切片
+                    # print("results_for:")
+                    # print(results_for)
 
                     #去掉重复的关注行
                     for node_back in results_back:
                         for node_for in results_for:
-                            if(node_back['name'] == node_for['name']):
+                            if(node_back[0]['name'] == node_for[0]['name']):
                                 results_back.remove(node_back)
                     
                     layer = 2
@@ -1089,10 +1092,10 @@ if __name__ == "__main__":
                     all_result = []
                     #先从关注点获得向下的切片(item层)
                     #list_to_crossfunc_for = process_cross_func(results_for, testID, 1, results_for, not_scan_func_list)
-                    list_to_crossfunc_for, not_scan_func_list = return_cross_func(results_for, testID, 1, results_for, not_scan_func_list, function_name, layer)
+                    list_to_crossfunc_for, not_scan_func_list = return_cross_func(results_for, testID, 1, results_for, not_scan_func_list, function_name, layer, 1)
 
                     #新增功能，如果向下找未能找到sink点，则返回到调用该(漏洞)函数的那一行，再向下切片
-                    list_return_for = process_return_func([], list_startnode[0], testID, layer, function_name, cnt)
+                    list_return_for = process_return_func([], list_startnode[0], testID, layer, function_name, cnt, 1)
                     #all_result.append(list_to_crossfunc_for + list_return_for) #TypeError: can only concatenate list (not "NoneType") to list
                     if(list_return_for != []):
                         for func_slice in list_return_for:
@@ -1103,7 +1106,9 @@ if __name__ == "__main__":
                     #all_result.append(results_back + list_to_crossfunc_for)
                     else:
                         all_result.append(results_back + list_to_crossfunc_for)
-                   
+                    
+                    print('all_result:')
+                    print(all_result)
                     if(all_result == []):
                         fout = open('error.txt', 'a')
                         fout.write(function_name + ' ' + str(func_id) + ' found nothing!\n')

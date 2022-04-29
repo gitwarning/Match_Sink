@@ -137,7 +137,7 @@ def sub_slice_backwards(startnode, list_node, not_scan_list):
     return list_node, not_scan_list
 
 #向上切片
-def program_slice_backwards(pdg, list_startNode):#startNode is a list
+def program_slice_backwards(pdg, list_startNode, num):#startNode is a list
     list_all_node = []
     # not_scan_list = []
     not_scan_list = set()
@@ -172,7 +172,12 @@ def program_slice_backwards(pdg, list_startNode):#startNode is a list
     #         a += 1
     #     else:
     #         del list_ordered_node[a]
-    return list_ordered_node
+    final_list_node = []
+    for node in list_ordered_node:
+        new_node = [node, num]
+        final_list_node.append(new_node)
+    # return list_ordered_node
+    return final_list_node
 
 
 def sub_slice_forward(startnode, list_node, not_scan_list):
@@ -191,7 +196,7 @@ def sub_slice_forward(startnode, list_node, not_scan_list):
     return list_node, not_scan_list
 
 #向下切片
-def program_slice_forward(pdg, list_startNode):#startNode is a list of parameters, only consider data dependency
+def program_slice_forward(pdg, list_startNode, num):#startNode is a list of parameters, only consider data dependency
     pdg = del_ctrl_edge(pdg)
             
     list_all_node = []
@@ -220,7 +225,12 @@ def program_slice_forward(pdg, list_startNode):#startNode is a list of parameter
     #     else:
     #         del list_ordered_node[a]
 
-    return list_ordered_node
+    final_list_node = []
+    for node in list_ordered_node:
+        new_node = [node, num]
+        final_list_node.append(new_node)
+    # return list_ordered_node
+    return final_list_node
 
 def get_all_identifiers_and_ptrArrMem_return_list(db, node_id):
     node_id = int(node_id)
@@ -788,7 +798,7 @@ def select_successors(db, startnode, variable_name):
         return flag, successors
 
 #获取漏洞函数return之后的切片
-def process_return_func(all_results_list, list_start_node, testID, layer, vulfunc, cnt): #startnode是漏洞函数中的关注点
+def process_return_func(all_results_list, list_start_node, testID, layer, vulfunc, cnt, current_layer): #startnode是漏洞函数中的关注点
 
     if(layer <= 0):
         return []
@@ -828,16 +838,16 @@ def process_return_func(all_results_list, list_start_node, testID, layer, vulfun
                 return []
             
             #从该语句向下切片(只考虑数据依赖)
-            ret_for = program_slice_forward(targetPDG, startnode)
+            ret_for = program_slice_forward(targetPDG, startnode, current_layer + 1)
 
             #list_resut_back = return_cross_func(ret_for, testID, 0, ret_for, [], cnt)
             #看这些向下的切片里面有没有跨函数的
-            list_result_for, not_scan = return_cross_func(ret_for, testID, 1, ret_for, startnode, new_vulfunc, cnt)
+            list_result_for, not_scan = return_cross_func(ret_for, testID, 1, ret_for, startnode, new_vulfunc, cnt, current_layer + 1)
             print('list_result_for:')
             print(list_result_for)
             
             #获取return之后的切片,这里传进去的list_ret_slice似乎一直都会是[]
-            all_result = process_return_func(list_ret_slice, list_start_node, testID, layer - 1, new_vulfunc, cnt)
+            all_result = process_return_func(list_ret_slice, list_start_node, testID, layer - 1, new_vulfunc, cnt, current_layer + 1)
             #list_ret_slice.append(list_result_for + all_result)
             print('all_result:')
             print(all_result)
@@ -851,15 +861,17 @@ def process_return_func(all_results_list, list_start_node, testID, layer, vulfun
           
     return list_ret_slice
 
-#执行向下跨函数的作用
-def return_cross_func(to_scan_list, testID, slicetype, list_result_node, not_scan_func_list, vulfunc, cnt):
+# 执行向下跨函数的作用
+# current_layer:当前是针对漏洞函数来说的第几层跨函数
+def return_cross_func(to_scan_list, testID, slicetype, list_result_node, not_scan_func_list, vulfunc, cnt, current_layer):
     if(cnt <= 0):
         return list_result_node, not_scan_func_list
 
     for node in to_scan_list:
+        node = node[0]
         num = cnt
-        #if node['name'] in not_scan_func_list:
-            #continue
+        # if node['name'] in not_scan_func_list:
+        #     continue
 
         ret = isNewOrDelOp(node, testID)
         if ret:
@@ -873,20 +885,24 @@ def return_cross_func(to_scan_list, testID, slicetype, list_result_node, not_sca
                 continue
 
             else:
-                result_list = sortedNodesByLoc(pdg.vs)
+                # result_list = sortedNodesByLoc(pdg.vs)
+                result_list_tmp = sortedNodesByLoc(pdg.vs)
+                for rl in result_list_tmp:
+                    new_rl = [rl, current_layer + 1]
+                    result_list.append(new_rl)
 
                 not_scan_func_list.append(node['name'])
 
                 index = 0
                 for result_node in list_result_node:
-                    if result_node['name'] == node['name']:
+                    if result_node[0]['name'] == node[0]['name']:
                         break
                     else:
                         index += 1
 
                 list_result_node = list_result_node[:index+1] + result_list + list_result_node[index+1:]
 
-                list_result_node, not_scan_func_list = return_cross_func(result_list, testID, slicetype, list_result_node, not_scan_func_list, cnt)
+                list_result_node, not_scan_func_list = return_cross_func(result_list, testID, slicetype, list_result_node, not_scan_func_list, cnt, current_layer + 1)
 
 
         else:          
@@ -963,27 +979,28 @@ def return_cross_func(to_scan_list, testID, slicetype, list_result_node, not_sca
                         continue
 
                     else:
-                        if slicetype == 0:
-                            ret_node = []
-                            for vertex in pdg.vs:
-                                if vertex['type'] == 'ReturnStatement':
-                                    ret_node.append(vertex)
+                        # if slicetype == 0:
+                        #     ret_node = []
+                        #     for vertex in pdg.vs:
+                        #         if vertex['type'] == 'ReturnStatement':
+                        #             ret_node.append(vertex)
 
-                            result_list = program_slice_backwards(pdg, ret_node)
-                            not_scan_func_list.append(node['name'])
+                        #     result_list = program_slice_backwards(pdg, ret_node)
+                        #     not_scan_func_list.append(node['name'])
 
-                            index = 0
-                            for result_node in list_result_node:
-                                if result_node['name'] == node['name']:
-                                    break
-                                else:
-                                    index += 1
+                        #     index = 0
+                        #     for result_node in list_result_node:
+                        #         if result_node['name'] == node['name']:
+                        #             break
+                        #         else:
+                        #             index += 1
                                 
-                            list_result_node = list_result_node[:index+1] + result_list + list_result_node[index+1:]
+                        #     list_result_node = list_result_node[:index+1] + result_list + list_result_node[index+1:]
 
-                            list_result_node, not_scan_func_list = return_cross_func(result_list, testID, slicetype, list_result_node, not_scan_func_list, cnt)
+                        #     list_result_node, not_scan_func_list = return_cross_func(result_list, testID, slicetype, list_result_node, not_scan_func_list, cnt)
 
-                        elif slicetype == 1:
+                        # elif slicetype == 1:
+                        if slicetype == 1:
                             param_node = []
                             FuncEntryNode = False
                             for vertex in pdg.vs:
@@ -993,25 +1010,29 @@ def return_cross_func(to_scan_list, testID, slicetype, list_result_node, not_sca
                                     FuncEntryNode = vertex
 
                             if param_node != []:
-                                result_list = program_slice_forward(pdg, param_node)
+                                result_list = program_slice_forward(pdg, param_node, current_layer + 1) # 向下调用了一层，current_ayer+1
                             else:
-                                result_list = sortedNodesByLoc(pdg.vs)
+                                result_list_tmp = sortedNodesByLoc(pdg.vs) # 所调用的函数没有参数的情况
+                                for rl in result_list_tmp:
+                                    new_rl = [rl, current_layer + 1]
+                                    result_list.append(new_rl)
+
 
                             not_scan_func_list.append(node['name'])
                             index = 0
 
                             for result_node in list_result_node:
-                                if result_node['name'] == node['name']:
+                                if result_node[0]['name'] == node[0]['name']:
                                     break
                                 else:
                                     index += 1
 
                             if FuncEntryNode != False:
-                                result_list.insert(0, FuncEntryNode)
+                                result_list.insert(0, [FuncEntryNode, current_layer + 1])
                                 
                             list_result_node = list_result_node[:index+1] + result_list + list_result_node[index+1:]
 
-                            list_result_node, not_scan_func_list = return_cross_func(result_list, testID, slicetype, list_result_node, not_scan_func_list, vulfunc, num)#我完全懂了
+                            list_result_node, not_scan_func_list = return_cross_func(result_list, testID, slicetype, list_result_node, not_scan_func_list, vulfunc, num, current_layer + 1)#我完全懂了
 
 
     return list_result_node, not_scan_func_list
