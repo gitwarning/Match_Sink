@@ -105,7 +105,7 @@ def write_to_slices_file(slices_content, diff_message, f_add):
                     new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file.strip() + ' cross_layer: ' + this_layer + '    (key_var lines)\n'
                     flag = False
                 else:
-                    new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file + ' cross_layer: ' + this_layer
+                    new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file + ' cross_layer: ' + this_layer + '\n'
         else:
             if(flag == True):
                 new_line = this_code + ' location: ' + str(this_loc) + ' file: ' + this_file.strip() +  + ' cross_layer: ' + this_layer + '    (key_var lines)\n'
