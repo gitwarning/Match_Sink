@@ -1,13 +1,5 @@
 ## coding:utf-8
 
-from cgi import test
-from cmath import pi
-from hashlib import new
-from os import O_NOFOLLOW
-import re
-import this
-
-from pyrsistent import T
 from joern.all import JoernSteps
 from igraph import *
 from access_db_operate import *
@@ -886,7 +878,6 @@ if __name__ == "__main__":
     old_path = path_data['all_test_code']['all_old_path'].replace("all_test_code","code")
     slice_store_filepath = path_data['step2_output']['record_tmp_slice'] #正常运行
     startnode_debug_path = path_data['step2_output']['startnode_debug_path'] #正常运行
-    cv_path = path_data['all_test_code']['all_cv_path']
 
     sliceres_anatmp = path_data['step2_output']['sliceres_anatmp']
     sliceres_anall = path_data['step2_output']['sliceres_anall']
@@ -986,9 +977,6 @@ if __name__ == "__main__":
                         print(func_name)
                         print(file_name)
                         print(line)
-                        cv_name = cv_path + '/cv_' + file_name.split('_')[2] + '.txt'
-                        cv_file = open(cv_name, 'w+')
-                        print >> cv_file, cv
                         
                         startnode = get_startnode_sche(j, func_name, file_name, line, cv)
                         print("startnode: ")
