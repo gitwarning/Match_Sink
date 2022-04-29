@@ -6,6 +6,8 @@ from hashlib import new
 from os import O_NOFOLLOW
 import re
 import this
+
+from pyrsistent import T
 from joern.all import JoernSteps
 from igraph import *
 from access_db_operate import *
@@ -28,6 +30,21 @@ def write_to_file(file_name, str_output):
     fw.write(str_output)
     fw.close()
 
+def not_code_line(slice_line):
+    slice_line = slice_line.strip()
+    if(slice_line == '------------------------------'):
+        return True
+    if('@@' in slice_line and slice_line[-1] == '}'):
+        return True
+    if(slice_line[-1] == ','):
+        return True
+    if(slice_line[-1] == '+'):
+        return True
+    if(' cross_layer: ' not in slice_line):
+        return True
+    
+    return False
+
 def write_to_slices_file(slices_content, diff_message, f_add):
     flag = False
     kvar = slices_content[0].split(' @@ ')[3]#获取关注点的行号
@@ -40,7 +57,10 @@ def write_to_slices_file(slices_content, diff_message, f_add):
         if(slice_line == slices_content[0]):
             slice_line = slice_line.replace('_NEW.c', '_OLD.c')
             
-        if(slice_line.strip()[-2:] != '.c'):#可能是开始行、以逗号结尾的函数定义行、切片之间的分割行等
+        # if(slice_line.strip()[-2:] != '.c'):#可能是开始行、以逗号结尾的函数定义行、切片之间的分割行等
+        #     f_add.write(slice_line)
+        #     continue
+        if(not_code_line(slice_line)):
             f_add.write(slice_line)
             continue
         print('yes')
@@ -51,9 +71,10 @@ def write_to_slices_file(slices_content, diff_message, f_add):
             index += 1
             vuln_file  = vuln_file + '_' + diff_tmp[index]
 
-        this_file = slice_line.split(' file: ')[-1].split('/')[-1] #获取当前行的文件名
+        this_file = slice_line.split(' file: ')[-1].split(' cross_layer: ')[0].strip().split('/')[-1] #获取当前行的文件名
         this_code = slice_line.split(' location: ')[0] #获取当前行的代码片段
         this_loc = slice_line.split(' location: ')[-1].split(' file: ')[0].strip() #获取当前行的行号
+        this_layer = slice_line.split(' cross_layer: ')[-1].strip() #获取当前跨函数层数
         is_add_line = False
         print(vuln_file, this_file.strip())
         print(kvar, this_loc, min_start)
@@ -62,7 +83,7 @@ def write_to_slices_file(slices_content, diff_message, f_add):
             print('yes')                    
             if(kvar == this_loc):
                 flag = True
-            if(int(this_loc) < min_start):
+            if(flag == False and int(this_loc) < min_start):
                 new_line = slice_line
                 # f_add.writ(slice_line + '\n')
             else:
@@ -89,13 +110,13 @@ def write_to_slices_file(slices_content, diff_message, f_add):
                 print(flag)
                 if(flag):
                     print(slice_line) 
-                    new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file.strip() + '    (key_var lines)\n'
+                    new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file.strip() + ' cross_layer: ' + this_layer + '    (key_var lines)\n'
                     flag = False
                 else:
-                    new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file
+                    new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file + ' cross_layer: ' + this_layer
         else:
             if(flag == True):
-                new_line = this_code + ' location: ' + str(this_loc) + ' file: ' + this_file.strip() + '    (key_var lines)\n'
+                new_line = this_code + ' location: ' + str(this_loc) + ' file: ' + this_file.strip() +  + ' cross_layer: ' + this_layer + '    (key_var lines)\n'
                 flag = False
             else:
                 new_line = slice_line
@@ -1186,15 +1207,15 @@ if __name__ == "__main__":
         print(diff_message)
         
         
-        kvar = slice_content[0].split(' @@ ')[3]#获取关注点的行号
-        flag = False #记录key_var line有没有出现
+        # kvar = slice_content[0].split(' @@ ')[3]#获取关注点的行号
+        # flag = False #记录key_var line有没有出现
         one_slices = []
         for slice_line in slice_content:
             one_slices.append(slice_line)
             if(slice_line.strip() == '------------------------------'):
                 print('------------------------------')
-                flag = False
-                kvar = one_slices[0].split(' @@ ')[3]#获取关注点的行号
+                # flag = False
+                # kvar = one_slices[0].split(' @@ ')[3]#获取关注点的行号
                 write_to_slices_file(one_slices, diff_message, f_add)
 
                 one_slices = []
