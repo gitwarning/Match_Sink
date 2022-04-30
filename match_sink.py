@@ -15,9 +15,11 @@ from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
 cwe = '125'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE125/tcpdump/CVE-2017-13008/CVE-2017-13008_CWE-125_5edf405d7ed9fc92f4f43e8a3d44baa4c6387562_print-802_11.c_11.c_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE125/tcpdump/tcpdump/CVE-2017-13008/slices.txt'
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
+old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/CVE-2017-13022/CVE-2017-13022_CWE-125_eee0b04bcfdae319c242b0b8fc3d07029ee65b8c_print-ip.c_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/CVE-2017-13022/slices.txt"
 # old_file = "E:/漏洞检测/可自动化实现/自动化测试/CVE-2016-10028/CVE-2016-10028_CWE-125_abd7f08b2353f43274b785db8c7224f082ef4d31_virtio-gpu-3d.c_1.1_OLD.c"
 # slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CVE-2016-10028/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用

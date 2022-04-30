@@ -72,6 +72,8 @@ def is_risk_func(line, cv):
         return True
     elif 'read' in line:
         return True
+    elif 'EXTRACT' in line:  # 针对tcpdump软件的EXTRACT_32BITS宏定义访问指针
+        return True
     else:
         return False
 
