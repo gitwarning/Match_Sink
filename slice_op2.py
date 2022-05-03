@@ -1022,7 +1022,7 @@ def return_cross_func(to_scan_list, testID, slicetype, list_result_node, not_sca
                             index = 0
 
                             for result_node in list_result_node:
-                                if result_node[0]['name'] == node[0]['name']:
+                                if result_node[0]['name'] == node['name']:
                                     break
                                 else:
                                     index += 1
