@@ -18,10 +18,8 @@ cwe = '125'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/CVE-2017-13022/CVE-2017-13022_CWE-125_eee0b04bcfdae319c242b0b8fc3d07029ee65b8c_print-ip.c_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/CVE-2017-13022/slices.txt"
-# old_file = "E:/漏洞检测/可自动化实现/自动化测试/CVE-2016-10028/CVE-2016-10028_CWE-125_abd7f08b2353f43274b785db8c7224f082ef4d31_virtio-gpu-3d.c_1.1_OLD.c"
-# slice_file = "E:/漏洞检测/可自动化实现/自动化测试/CVE-2016-10028/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/CVE-2017-13033/CVE-2017-13033_CWE-125_ae83295915d08a854de27a88efac5dd7353e6d3f_print-vtp.c_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/CVE-2017-13033/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -339,7 +337,11 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                         cv_list[epoch].append(return_cv)
                         return_flag = False
                         print('当前CV经过漏洞函数返回，经转化后新的CV是：', return_cv)
-
+            if 'for ' in line:
+                if '->' in line and ' -> ' not in line:
+                    line = line.replace('->', ' -> ')
+                if '*' in line and '* ' not in line:
+                    line = line.replace('*', '* ')
             # 进行sink点匹配
             # 对于不同的漏洞类型进行了封装
             if cwe == '189' or cwe == '190' or cwe == '191':
@@ -363,9 +365,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
             if 'if ' in line:  #涉及if条件语句行不转换
                 chang_flag = 0
             # 如果当前行涉及到CV的转换，将其转换后的变量记录下来以作备用
-            if 'for ' in line:
-                if '->' in line and ' -> ' not in line:
-                    line = line.replace('->', ' -> ')
+
             if has_cv_fz_right(cv, line) and chang_flag == 1:
                 tmp_cv = cv
                 # for循环怎么处理？for (j = 0; j < nelements && i < sh.sh_properties  cv需要从nelements==》j
@@ -474,7 +474,10 @@ def match_sinks(slices):
     is_add = False
     # 找到diff修改的位置，将diff修改位置向下的切片加入到after_diff[]
     for line in slices:
-        this_loc = line[line.find('location: '):line.rfind(' cross_layer')].replace('location: ', '')  # 当前切片的行号
+        if 'cross_layer' in line:
+            this_loc = line[line.find('location: '):line.rfind(' cross_layer')].replace('location: ', '')  # 当前切片的行号
+        else:
+            this_loc = line[line.find('location: '):line.rfind(' file')].replace('location: ', '')  # 当前切片的行号
         this_file = line.split('file: ')[-1].split('/')[-1]
         if flag == 0:
             if '(key_var lines)' in line:  # 含有(key_var lines)标志的表明当前行是diff修改的下一行,因为在diff只增加的类型中在漏洞文件中找不到修改行
