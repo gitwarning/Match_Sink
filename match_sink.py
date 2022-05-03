@@ -18,8 +18,8 @@ cwe = '125'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/CVE-2017-13033/CVE-2017-13033_CWE-125_ae83295915d08a854de27a88efac5dd7353e6d3f_print-vtp.c_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/CVE-2017-13033/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/CVE-2014-9673_CWE-119_35252ae9aa1dd9343e9f4884e9ddb1fee10ef415_ftobjs.c_ftobjs.c_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -258,6 +258,11 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
     for cv in cv_list[epoch]:
         if cv.isdigit() or cv.isupper():  # 如果关键变量是常数，直接跳过
             continue
+        # 如果是转换的cv，从cv的转换行开始匹配sink点
+        start_line = 0
+        if '$$' in cv:
+            start_line = int(cv.split('$$')[-1].strip())
+            cv = cv.split('$$')[0].strip()
         array_sink = True
         pointer_sink = True
         risk_func_sink = True
@@ -288,8 +293,9 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
         if cv.isupper():  # 如果cv全是大写，一般是宏定义的常数，这种也跳过
             continue
         print("=======now CV is " + cv + "=========")
+        sink_lines = after_diff[start_line:]
         # 找到diff修改的行，从diff修改行向下寻找sink点
-        for i, line in enumerate(after_diff):
+        for i, line in enumerate(sink_lines):
             chang_flag = 1  # 排除if条件语句即使出现等号也只是判断的情况
             if is_return_cv(line, cv):
                 return_flag = True
@@ -388,12 +394,15 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                     tmp_cv = line.split('+=')[0].strip()
                 elif '|=' in line:
                     tmp_cv = line.split('|=')[0].strip()
+                elif '-=' in line:
+                    tmp_cv = line.split('-=')[0].strip()
                 else:
                     tmp_cv = line.split('=')[0].strip()
                 tmp_cv = left_process(tmp_cv, 'space')  # 对等号左边的变量进行处理(去掉可能存在的类型名等)
                 if ', ' in tmp_cv:  # x++, guest_ptr += cmp_bytes, server_ptr += cmp_bytes)
                     tmp_cv = tmp_cv.split(', ')[-1]
                 if tmp_cv not in cv_list[epoch + 1] and tmp_cv not in cv_list[epoch]:
+                    tmp_cv = tmp_cv+'$$'+str(i)
                     cv_list[epoch + 1].append(tmp_cv)
                     print('CV转化行：', line)
                     print('转换后的CV：', tmp_cv)
