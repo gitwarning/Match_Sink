@@ -68,7 +68,7 @@ def is_risk_func(line, cv):
         return True
     elif ('recv' in line and 'recv ->' not in line):
         return True
-    elif 'Write' in line or 'write' in line:
+    elif ('Write' in line or 'write' in line) and '_write' not in line:
         return True
     elif 'read' in line:
         return True

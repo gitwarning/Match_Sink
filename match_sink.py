@@ -18,8 +18,8 @@ cwe = '125'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/CVE-2014-9673_CWE-119_35252ae9aa1dd9343e9f4884e9ddb1fee10ef415_ftobjs.c_ftobjs.c_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/CVE-2017-13034/CVE-2017-13034_CWE-125_da6f1a677bfa4476abaeaf9b1afe1c4390f51b41_print-pgm.c_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/CVE-2017-13034/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
