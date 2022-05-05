@@ -129,9 +129,13 @@ def sub_slice_backwards(startnode, list_node, not_scan_list):
         #not_scan_list.append(startnode['name'])
         not_scan_list.add(startnode['name'])
     predecessors = startnode.predecessors()
+    startnode_loc = int(startnode['location'].split(':')[0])
     
     if predecessors != []:
-        for p_node in predecessors:                
+        for p_node in predecessors:
+            p_node_loc = int(p_node['location'].split(':')[0])
+            if(p_node_loc > startnode_loc):
+                continue             
             list_node, not_scan_list = sub_slice_backwards(p_node, list_node, not_scan_list)
 
     return list_node, not_scan_list
@@ -146,8 +150,13 @@ def program_slice_backwards(pdg, list_startNode, num):#startNode is a list
         # not_scan_list.append(startNode['name'])
         not_scan_list.add(startNode['name'])
         predecessors = startNode.predecessors()
+        startNode_loc = int(startNode['location'].split(':')[0])
+
         if predecessors != []:
             for p_node in predecessors:
+                p_node_loc = int(p_node['location'].split(':')[0])
+                if(p_node_loc > startNode_loc):
+                    continue
                 list_node, not_scan_list = sub_slice_backwards(p_node, list_node, not_scan_list)
 
         list_all_node += list_node
@@ -189,8 +198,13 @@ def sub_slice_forward(startnode, list_node, not_scan_list):
         #not_scan_list.append(startnode['name'])
         not_scan_list.add(startnode['name'])
     successors = startnode.successors()
+    startnode_loc = int(startnode['location'].split(':')[0])
+    
     if successors != []:
-        for p_node in successors:        
+        for p_node in successors:
+            p_node_loc = int(p_node['location'].split(':')[0])
+            if(p_node_loc < startnode_loc):
+                continue   
             list_node, not_scan_list = sub_slice_forward(p_node, list_node, not_scan_list)
 
     return list_node, not_scan_list
@@ -207,9 +221,13 @@ def program_slice_forward(pdg, list_startNode, num):#startNode is a list of para
         # not_scan_list.append(startNode['name'])
         not_scan_list.add(startNode['name'])
         successors = startNode.successors()
+        startNode_loc = int(startNode['location'].split(':')[0])
         
         if successors != []:
             for p_node in successors:
+                p_node_loc = int(p_node['location'].split(':')[0])
+                if(p_node_loc < startNode_loc):
+                    continue
                 list_node, not_scan_list = sub_slice_forward(p_node, list_node, not_scan_list)
 
         list_all_node += list_node
