@@ -14,12 +14,12 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '125'  # 匹配的漏洞类型
+cwe = '119'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/CVE-2017-13034/CVE-2017-13034_CWE-125_da6f1a677bfa4476abaeaf9b1afe1c4390f51b41_print-pgm.c_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/tcpdump/CVE-2017-13034/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/freetype2/CVE-2014-9673/CVE-2014-9673_CWE-119_35252ae9aa1dd9343e9f4884e9ddb1fee10ef415_ftobjs.c_ftobjs.c_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/freetype2/CVE-2014-9673/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -653,6 +653,11 @@ def is_expression(cv):
         tmps = cv.split(" ")
         if tmps[tmps.index('*')-1].isalpha() and not tmps[tmps.index('*')-1].islower():
             return False
+    if '[' in cv:
+        pattern = "\[.*\]"
+        index = re.findall(pattern, cv)
+        for i in index:
+            cv = cv.replace(i, '').strip()
     cvs = re.split('[*+/-]', cv)
 
 
@@ -854,6 +859,8 @@ def match_sources(slices, sink_cv):
                                 tmp_cv = tmps[-1].strip()
                                 if '$' in tmp_cv:
                                     tmp_cv = tmp_cv.replace('$', '->')
+                                if '=' in tmp_cv:
+                                    tmp_cv = tmp_cv.replace('=', '').strip()
                                 print('当前语句含有for循环，控制循环次数的变量是：', tmp_cv)
 
             if has_only_cv(line, tmp_cv) and has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 含有等号的赋值
