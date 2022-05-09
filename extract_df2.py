@@ -37,7 +37,7 @@ def not_code_line(slice_line):
     
     return False
 
-def write_to_slices_file(slices_content, diff_message, f_add):
+def write_to_slices_file(slices_content, diff_message, f_add, diff_name):
     flag = False
     kvar = slices_content[0].split(' @@ ')[3]#获取关注点的行号
     
@@ -86,7 +86,7 @@ def write_to_slices_file(slices_content, diff_message, f_add):
                     medium_tmp = num_list[0]
                     add_tmp = num_list[1]
 
-                    if(int(this_loc) > (int(start_line) + medium_tmp + add_tmp + 1)):
+                    if(int(this_loc) > (int(start_line) + medium_tmp + add_tmp)):
                         num_fin += add_tmp
                     elif(int(this_loc) >= (int(start_line) + medium_tmp)):
                         is_add_line = True
@@ -1204,67 +1204,6 @@ if __name__ == "__main__":
                 print('------------------------------')
                 # flag = False
                 # kvar = one_slices[0].split(' @@ ')[3]#获取关注点的行号
-                write_to_slices_file(one_slices, diff_message, f_add)
+                write_to_slices_file(one_slices, diff_message, f_add, diff_name)
 
                 one_slices = []
-
-            # if(slice_line.strip()[-2:] != '.c'):#可能是开始行、以逗号结尾的函数定义行、切片之间的分割行等
-            #     f_add.write(slice_line)
-            #     continue
-            # print('yes')
-            # diff_tmp = diff_name.split('_')
-            # index = 3
-            # vuln_file = diff_tmp[3]
-            # while('.c' not in vuln_file):
-            #     index += 1
-            #     vuln_file  = vuln_file + '_' + diff_tmp[index]
-
-            # this_file = slice_line.split(' file: ')[-1].split('/')[-1] #获取当前行的文件名
-            # this_code = slice_line.split(' location: ')[0] #获取当前行的代码片段
-            # this_loc = slice_line.split(' location: ')[-1].split(' file: ')[0].strip() #获取当前行的行号
-            # is_add_line = False
-            # print(vuln_file, this_file.strip())
-            # print(this_loc, min_start)
-                        
-            # if(vuln_file == this_file.strip()):#如果这一行是漏洞文件里的，需要改一下行号
-            #     print('yes')                    
-            #     if(kvar == this_loc):
-            #         flag = True
-            #     if(int(this_loc) < min_start):
-            #         new_line = slice_line
-            #         # f_add.writ(slice_line + '\n')
-            #     else:
-            #         num_fin = 0
-            #         print('ok')
-            #         for start_line in diff_message.keys():
-            #             num_list = diff_message[start_line]
-            #             medium_tmp = num_list[0]
-            #             add_tmp = num_list[1]
-
-            #             if(int(this_loc) > (int(start_line) + medium_tmp + add_tmp + 1)):
-            #                 num_fin = add_tmp
-            #             elif(int(this_loc) >= (int(start_line) + medium_tmp)):
-            #                 is_add_line = True
-            #                 break
-                                
-            #         print(num_fin)
-            #         if(is_add_line):#如果是加号行就跳过
-            #             # flag = True
-            #             # print(slice_line)
-            #             # print(flag, '-----')
-            #             continue
-            #         new_loc = int(this_loc) - num_fin
-            #         print(flag)
-            #         if(flag):
-            #             print(slice_line) 
-            #             new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file.strip() + '    (key_var lines)\n'
-            #             flag = False
-            #         else:
-            #             new_line = this_code + ' location: ' + str(new_loc) + ' file: ' + this_file
-            # else:
-            #     if(flag == True):
-            #         new_line = this_code + ' location: ' + str(this_loc) + ' file: ' + this_file.strip() + '    (key_var lines)\n'
-            #         flag = False
-            #     else:
-            #         new_line = slice_line
-            # f_add.write(new_line)
