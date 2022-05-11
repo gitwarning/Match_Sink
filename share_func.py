@@ -74,6 +74,8 @@ def is_risk_func(line, cv):
         return True
     elif 'EXTRACT' in line:  # 针对tcpdump软件的EXTRACT_32BITS宏定义访问指针
         return True
+    elif 'TT_NEXT_U' in line: #针对freetype2软件中的TT_NEXT_ULONG/INT(...)宏定义
+        return True
     else:
         return False
 

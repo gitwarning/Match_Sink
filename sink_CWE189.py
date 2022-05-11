@@ -21,6 +21,10 @@ def is_risk_func_189(line ,cv):
         return True
     elif 'AcquireVirtualMemory' in line:
         return True
+    elif 'TT_NEXT_U' in line: #针对freetype2软件中的TT_NEXT_ULONG/INT(...)宏定义
+        return True
+    elif 'FT_MEM_SET' in line: #freetype2软件中该函数经过两层宏定义变成memset
+        return True
     else:
         return False
 
