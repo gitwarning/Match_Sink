@@ -849,7 +849,7 @@ def process_return_func(all_results_list, list_start_node, testID, layer, vulfun
             for n in targetPDG.vs:
                 if(n['name'] == item[0]):
                     list_start_node = n #将下次循环的startnode换成新的函数
-                    new_vulfunc = isFuncCall(list_start_node)[0]
+                    # new_vulfunc = isFuncCall(list_start_node)[0]
                     if(isFuncCall(list_start_node) != False):
                         new_vulfunc = isFuncCall(list_start_node)[0]
                     else:
