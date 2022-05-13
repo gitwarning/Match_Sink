@@ -1,7 +1,137 @@
 ## coding:utf-8
-from operator import not_
-from general_op import *
+from general_op2 import isFuncCall
 from Queue import Queue,LifoQueue,PriorityQueue
+from general_op2 import *
+import re
+
+def rmv_str(s): #去除了字符串
+    while "\'" in s:
+        indL = s.find('\'')
+        if '\'' in s[indL + 1:]:
+            indR = s.find('\'',indL+1)
+            s = s[:indL] + '@@@@' + s[indR+1:]
+        else:
+            s = s[:indL] + '@@@@' + s[indL + 1:]
+   
+    while "\"" in s:
+        indL = s.find('\"')
+        if '\"' in s[indL + 1:]:
+            indR = s.find('\"',indL+1)
+            s = s[:indL] + '@@@@' + s[indR+1:]
+        else:
+            s = s[:indL] + '@@@@' + s[indL + 1:]
+    return s
+
+def process_str(s):
+    s = s.replace(' -> ', '->').replace(' . ', '.').replace(' & ', '&').replace('[ ', '[').replace(' ]', ']')
+    return s
+
+def get_call_var(s, flag):
+    # if '_log' in s or 'spprintf' in s or 'E_WARNING' in s or 'warning' in s or 'assert' in s or 'print' in s or 'ASSERT' in s or 'Exception' in s or 'Error' in s or 'FAIL' in s:
+    # if 'spprintf' in s or 'E_WARNING' in s or 'warning' in s or 'assert' in s or 'print' in s or 'ASSERT' in s or 'Exception' in s or 'Error' in s or 'FAIL' in s:
+    #     return []
+    print(s)
+    s = rmv_str(s)
+    s = process_str(s)
+    if 'CreateMockRead(ping_frames.back()' in s:
+        print(s)
+    if s[1:].strip().startswith('(') and not s[1:].strip().startswith('(('): #去除 (void) func(a,b);情况中的(void)
+        indR = s[1:].strip().find(")")
+        s = s[1:].strip()[indR+1 :]
+
+    start = s.find('(')
+    end = s.rfind(')')
+    
+    if((start != -1) and (end != -1)):
+        res = s[start + 1:end] # 已经去掉了括号
+    elif(start != -1):
+        res = s[start + 1:]
+    elif(end != -1):
+        res = s[:end]
+    else:
+        print("error")
+        return
+    
+    res = re.split('[,]', res) #以逗号分割实参，将实参单独提出
+    res = [i for i in res if i != ''] # 去除空
+    res_vars = []
+
+    para_num = 1
+    is_current_func = True
+
+    for i in res:
+        if i.strip() == '':
+            continue
+        if(i[0] == ' '):
+            i = i[1:]
+        if(i[0] == '\"' and i[-1] == '\"'):# 如果是字符换就不输出了
+            continue
+        if(i[0] == '\'' and i[-1] == '\''):# 如果是字符换就不输出了
+            continue
+        if flag == 2:
+            res_vars.append(i.split(' ')[-1]) #去除变量类型
+        else:# 分割函数参数中存在的表达式 提取出变量
+            sym_L  = i.rfind('<')
+            sym_R = i.find(">")
+            if sym_R!= -1 and sym_L != -1 and '->' not in i[sym_L:sym_R] and ' ' not in i[sym_L:sym_R]:
+                i = i.split(">")[-1]
+            i_list = re.split('&&|[||]', i)
+            i_list = [k for k in i_list if k != ''] # 去除空
+            for j in i_list:
+                if(j[0] == ' '): # 去除开头可能存在的空格
+                    j = j[1:]
+                
+                if "(" in j and ')' not in j: #函数调用里面还有函数调用，套娃专用
+                    ind = j.find('(')
+                    j = j[ind+1:]
+                    is_current_func = False #说明当前的参数不是最外层函数里面的
+                
+                if ")" in j and '(' not in j:
+                    ind = j.find(')')
+                    j = j[:ind]
+                    is_current_func = True #出来了
+
+                if '(' in j and ')' in j: #(const int) a
+                    locL = j.rfind('(')
+                    locR = j.find(')')
+                    if locL < locR:
+                        if locR != len(j) - 1:#(const int) a
+                            j = j.split(')')[-1]
+                        else:
+                            if locR != locL + 1:
+                                j = j[locL+1 : locR]
+                    else:
+                        j = j[locL+1:]
+
+
+                index = get_location(j)
+                if(index != -2):
+                    j = j[:index]
+                
+                if('-' in j and '->' not in j):
+                    j_list = re.split(' *[,;\/\+\*\-&] *', j)
+                else:
+                    j_list = re.split(' *[,;\/\+\*&] *', j)
+                # j_list = re.split('[, ]|[ + ]|[ - ]|[ * ]|[ / ]|[; ][ & ]|[+]|[*]|[/]', j)
+                j_list = [m for m in j_list if ((m != '') and (m != '-') and (m != '+') and (m != '/') and (m != '*') and (m != '&'))] # 去除空和其它字符
+                for k in j_list: #处理每一个实参表达式, 去除表达式中的括号
+                    if((is_number(k) == False) and (is_define(k) == False)):
+                        if '(' in k and ')' not in k: ####
+                            inde = k.find("(")
+                            k = k[inde+1:]
+                            res_vars.append([k, para_num])
+                        else:
+                            res_vars.append([k, para_num])
+                    else:
+                        print()
+            
+        if(is_current_func == True):
+            para_num += 1
+
+    # res_vars2 = check_var_again(res_vars)
+    # return res_vars2
+    return res_vars
+
 
 def get_arguments(db,node_id):
     node_id = int(node_id)
@@ -24,102 +154,6 @@ def get_arguments(db,node_id):
                 q.put(node_id)
     return nodes
 
-def get_child_type_for_AndOr(db, node_id):
-    node_id = int(node_id)
-    q = Queue(maxsize=100)
-    q.put(node_id)
-    # nodeId_type = {}
-    node_list = []
-    while not q.empty():
-        node_id = q.get()
-        query_with_var = "g.v(%d).children()" % node_id
-        children = db.runGremlinQuery(query_with_var)
-        for child in children:                        
-            child_type = child['type']
-            node_id = child._id
-            node_code = child['code']
-            if child_type == 'AndExpression' or child_type == 'OrExpression':
-                q.put(node_id)
-                continue
-             
-            else:
-                node_list.append(child)
-                
-    return node_list
-
-def get_cv_for_AndOr(db, node):
-    node_type = node['type']
-    node_code = node['code']
-    node_id = int(node._id)
-    varlist_in_condition = []
-
-    if node_type == 'RelationalExpression' or node_type == 'EqualityExpression':# (a < 10)/ (a == 10)/ (a != 10)
-        operator = node['operator']
-        left_part_code  = node_code.split(operator)[0].replace(' ','')
-        idents_name = get_all_identifiers_and_ptrArrMem_return_list(db, node_id)
-        for ident in idents_name:
-            if ident in left_part_code:
-                varlist_in_condition.append(ident)
-
-    elif node_type == 'UnaryOp' or node_type == 'IncDecOp': #(!a) / (a --)
-        idents_name = get_all_identifiers_and_ptrArrMem_return_list(db, node_id)
-        for ident in idents_name:
-            varlist_in_condition.append(ident)
-
-    elif node_type == 'CallExpression':
-        argument_list = []
-        argument_node_list = get_arguments(db, node_id)
-        for argument in argument_node_list:
-            argument_id = argument._id
-            ident_list = get_all_identifiers_and_ptrArrMem_return_list(db, argument_id)
-            for ident in ident_list:
-                varlist_in_condition.append(ident)
-
-    else:
-        varlist_in_condition = condition_value_deliver(db, node_id)
-    
-    return varlist_in_condition
-
-def condition_value_deliver(db, node_id):
-    varlist_in_condition = []
-    query_with_var = "g.v(%d).children()" % node_id
-    children = db.runGremlinQuery(query_with_var)
-    for child in children:
-        child_type = child['type']
-        child_code = child['code']
-        child_id = child._id
-        if child_type == 'RelationalExpression' or child_type == 'EqualityExpression':# (a < 10)/ (a == 10)/ (a != 10)
-            operator = child['operator']
-            left_part_code  = child_code.split(operator)[0].replace(' ','')
-            idents_name = get_all_identifiers_and_ptrArrMem_return_list(db, child_id)
-            for ident in idents_name:
-                if ident in left_part_code:
-                    varlist_in_condition.append(ident)
-
-        elif child_type == 'UnaryOp' or child_type == 'IncDecOp': #(!a) / (a --)
-            idents_name = get_all_identifiers_and_ptrArrMem_return_list(db, child_id)
-            for ident in idents_name:
-                varlist_in_condition.append(ident)
-
-        elif child_type == 'CallExpression':
-            argument_list = []
-            argument_node_list = get_arguments(db, child_id)
-            for argument in argument_node_list:
-                argument_id = argument._id
-                ident_list = get_all_identifiers_and_ptrArrMem_return_list(db, argument_id)
-                for ident in ident_list:
-                    varlist_in_condition.append(ident)
-        # child_type == 'AndExpression' or child_type == 'OrExpression'(a == 0 || b != 0, &&)
-        elif child_type == 'AndExpression' or child_type == 'OrExpression':
-            node_list = get_child_type_for_AndOr(db, child_id)
-            for node in node_list:
-                varlist_in_condition = get_cv_for_AndOr(db,node)
-
-        else:
-            varlist_in_condition = condition_value_deliver(db, child_id)
-    
-    return varlist_in_condition
-
 def sub_slice_backwards(startnode, list_node, not_scan_list):
     if startnode['name'] in not_scan_list:
         return list_node, not_scan_list
@@ -132,10 +166,10 @@ def sub_slice_backwards(startnode, list_node, not_scan_list):
     startnode_loc = int(startnode['location'].split(':')[0])
     
     if predecessors != []:
-        for p_node in predecessors:
+        for p_node in predecessors: 
             p_node_loc = int(p_node['location'].split(':')[0])
             if(p_node_loc > startnode_loc):
-                continue             
+                continue               
             list_node, not_scan_list = sub_slice_backwards(p_node, list_node, not_scan_list)
 
     return list_node, not_scan_list
@@ -151,7 +185,6 @@ def program_slice_backwards(pdg, list_startNode, num):#startNode is a list
         not_scan_list.add(startNode['name'])
         predecessors = startNode.predecessors()
         startNode_loc = int(startNode['location'].split(':')[0])
-
         if predecessors != []:
             for p_node in predecessors:
                 p_node_loc = int(p_node['location'].split(':')[0])
@@ -199,12 +232,12 @@ def sub_slice_forward(startnode, list_node, not_scan_list):
         not_scan_list.add(startnode['name'])
     successors = startnode.successors()
     startnode_loc = int(startnode['location'].split(':')[0])
-    
+
     if successors != []:
-        for p_node in successors:
+        for p_node in successors:       
             p_node_loc = int(p_node['location'].split(':')[0])
             if(p_node_loc < startnode_loc):
-                continue   
+                continue  
             list_node, not_scan_list = sub_slice_forward(p_node, list_node, not_scan_list)
 
     return list_node, not_scan_list
@@ -285,116 +318,6 @@ def get_all_identifiers_and_ptrArrMem_return_list(db, node_id):
 
     identifiers = list(set(identifiers))
     return identifiers
-
-def select_successors_for_condition(db, startnode):
-    successors_all = startnode.successors()
-    successors_all = list(set(successors_all))
-    print('\n\t--------- succs of ',startnode['code'],'\t',startnode['location'])
-    for suc in successors_all:
-        print('\tall_succs:\t',suc['code'])
-
-    condition_id = int(startnode['name'])
-    startnode_line = startnode['location'].split(":")[0]
-    successors_temp = []
-    successors = []
-    vars_in_cond_stmt = []
-
-    query_with_var = "g.v(%d).parents()" % condition_id
-    parents = db.runGremlinQuery(query_with_var)
-
-    for res in parents:
-        if res['type'] == 'ForStatement':
-            forstmt_id = res._id
-            var_in_forstmt = []
-
-            query_with_var = "g.v(%d).children()" % forstmt_id
-            children = db.runGremlinQuery(query_with_var)
-
-            for child in children:
-                child_type = child['type']
-                child_id = child._id
-                if child_type == 'ForInit' or child_type == "IncDecOp":
-                    idents_in_forInit = []
-                    idents_in_forInit = get_all_identifiers_and_ptrArrMem_return_list(db, child_id)
-                    if idents_in_forInit != []:
-                        for ident in idents_in_forInit:
-                            var_in_forstmt.append(ident)
-                
-                elif child_type == 'Condition':
-                    
-                    var_in_condition = condition_value_deliver(db, child_id)
-                    for var in var_in_condition:
-                        var_in_forstmt.append(var)
-
-                else:
-                    continue
-            
-            vars_in_cond_stmt = list(set(var_in_forstmt))
-        
-        elif res['type'] == 'IfStatement':
-            var_in_ifstmt = []
-            query_with_var = "g.v(%d).children()" % res._id
-            if_stmt_child = db.runGremlinQuery(query_with_var)
-            for child in if_stmt_child:
-                child_id = child._id
-                child_type = child['type']
-                varlist_in_condition = []
-                if child_type == 'Condition':
-                    var_in_condition = condition_value_deliver(db, child_id)
-                    for var in var_in_condition:
-                        var_in_ifstmt.append(var)
-                break
-            
-            vars_in_cond_stmt = list(set(var_in_ifstmt))
-
-        elif res['type'] == 'WhileStatement':
-            var_in_whilestmt = []
-            query_with_var = "g.v(%d).children()" % res._id
-            while_stmt_child = db.runGremlinQuery(query_with_var)
-            for child in while_stmt_child:
-                child_id = child._id
-                child_type = child['type']
-                varlist_in_condition = []
-                if child_type == 'Condition':
-                    var_in_condition = condition_value_deliver(db, child_id)
-                    for var in var_in_condition:
-                        var_in_whilestmt.append(var)
-                break
-            
-            vars_in_cond_stmt = list(set(var_in_whilestmt))
-
-        elif res['type'] == 'SwitchStatement':
-            return []              
-                        
-        else:
-            successors_temp += successors_all
-
-    for succ in successors_all:
-        succ_id = succ['name']
-        idents_in_succ = get_all_identifiers_and_ptrArrMem_return_list(db, succ_id)
-        if vars_in_cond_stmt != []:
-            for var in vars_in_cond_stmt:
-                for ident in idents_in_succ:
-                    if ident == var:
-                        successors_temp.append(succ)
-                        break
-                    
-    successors_temp = list(set(successors_temp))
-    for node in successors_temp:
-        line = node['location'].split(":")[0]
-        if line > startnode_line:
-            successors.append(node)
-
-    if successors == []:
-        print('-----------------------------------------------------------------------------------------------------------------------------------------')
-        print("startnode: ",startnode['location'],"   HAS NO SUCCESSORS!","     startnode_id: ",condition_id)
-        print('-----------------------------------------------------------------------------------------------------------------------------------------')
-        return []
-
-    else:
-        for suc in successors:
-            print('\tselected_succs:\t',suc['code'])
-        return successors
 
 #(用于向上的切片也需要跨函数的情况,该版本不需要)
 def process_cross_func(to_scan_list, testID, slicetype, list_result_node, not_scan_func_list):
@@ -685,9 +608,8 @@ def backward_to_decl(db, startnode, variable_name):
     identifierDecl, variable_name = select_predecessors(db,startnode, variable_name)
     if identifierDecl == []:
         return [],[],variable_name
-    startnode_new = identifierDecl[0]
-    flag, successors = select_successors(db, startnode_new, variable_name)
-    return identifierDecl, successors, variable_name
+
+    return identifierDecl
 
 def select_predecessors(db, startnode, variable_name):
     varias = []
@@ -725,7 +647,7 @@ def select_predecessors(db, startnode, variable_name):
         if node_type == 'IdentifierDeclStatement' or node_type == 'Parameter':
             if variable_name in idents_in_pre:
                 identifierDecl.append(p_node)
-    if identifierDecl == []:
+    if identifierDecl == []: #如果没有找到，就向上一级变量回溯
         class_name = ''
         if "->" in variable_name:
             class_name = variable_name.split("->")[0]
@@ -757,66 +679,49 @@ def select_predecessors(db, startnode, variable_name):
         print("The number of identifierdel ERRORS!!!")
     return identifierDecl, variable_name
 
-def select_successors(db, startnode, variable_name):
-    flag = 0
-    #if the identifierDeclaration statement declares more than one variables
-    #the successors of this node would include all variables' successors, so it has to be filtered
-    successors_all = startnode.successors()
-    successors_all = list(set(successors_all))
-    print('\n\t------------- succs of ',startnode['code'],'\t',startnode['location'], '\tcv: '),  variable_name
-    if successors_all == []:
-        return flag, []
-    for suc in successors_all:
-        print('\tall_succs:\t',suc['code'], '\t', suc['location'])
-    startnode_type = startnode["type"]
-    startnode_line = startnode['location'].split(":")[0]
-    startnode_code = startnode['code']
-    successors_temp = []
-    successors = []
-    
-    #declaration has wrong station that include more than one variable's successors
-    #Startnode为identifierDeclStatement类型，并且该行定义了多个变量，e.g., int a,b,c 
-    if startnode_type == "IdentifierDeclStatement" and ',' in startnode_code:
-        # filter successors that are not related to the ciritical variable
-        for succ_node in successors_all:
-            succ_id = int(succ_node['name'])
-            
-            idents_in_succ = get_all_identifiers_and_ptrArrMem_return_list(db, succ_id)
-            if idents_in_succ == []:
-                successors_temp.append(succ_node)
-            else:    
-                for ident in idents_in_succ:
-                    if ident == variable_name:
-                        successors_temp.append(succ_node)
-    elif startnode_type == "Condition":
-        successors_temp = select_successors_for_condition(db, startnode)
-        
+# 为无返回值的函数调用，或者返回值是error
+def is_just_function_call(startnode):
+    if(startnode['type'] != 'ExpressionStatement'):
+        return False
+    start_code = startnode['code'].strip()
+    func = isFuncCall(startnode)
+    if(func != False):
+        func_before = start_code.split(func[0])[0] #函数名前面的内容
+        if('=' in func_before):
+            if(func_before.split(' = ')[0].strip() == 'error'):
+                return True
+            else:
+                return False
+        else:
+            return True
     else:
-        for succ_node in successors_all:
-            succ_id = int(succ_node['name'])
-            idents_in_succ = get_all_identifiers_and_ptrArrMem_return_list(db, succ_id)
-            if variable_name in idents_in_succ:
-                successors_temp.append(succ_node)
+        return False
 
-    for node in successors_temp:
-        line = node['location'].split(":")[0]
-        if line > startnode_line:
-            successors.append(node)
+# 获取函数调用语句中的指针类型参数
+def get_cv(vul_define_node, startnode):
+    point_para_idx = []
+    point_para = []
+    idx = 1
+    start_code = startnode['code'].strip()
+    for para_node in vul_define_node:
+        para = para_node['code']
+        if('*' in para):
+            point_para_idx.append(idx)
+        idx += 1
+    cvs = get_call_var(start_code, 1)
+    print(cvs)
 
-    for suc in successors:
-        print('\tselected_succs:\t',suc['code'], '\t', suc['location'])
+    for cv_message in cvs:
+        cv = cv_message[0]
+        cv_idx = cv_message[1]
+        if(cv_idx in point_para_idx): #如果某个参数是函数调用，如果调用返回值是指针类型，那么把它的所有参数都加进去
+            point_para.append(cv)
 
-    if successors == {}:
-        flag = 1
-        print("startnode: ",startnode['location'],"   HAS NO SUCCESSORS!")
-        return flag,[]
+    return point_para   
 
-    else:
-        flag = 0    
-        return flag, successors
 
 #获取漏洞函数return之后的切片
-def process_return_func(all_results_list, list_start_node, testID, layer, vulfunc, cnt, current_layer): #startnode是漏洞函数中的关注点
+def process_return_func(j, vul_define_node, list_start_node, testID, layer, vulfunc, cnt, current_layer): #startnode是漏洞函数中的关注点
 
     if(layer <= 0):
         return []
@@ -859,8 +764,28 @@ def process_return_func(all_results_list, list_start_node, testID, layer, vulfun
             if(startnode == []):
                 return []
             
+            new_startnode = []
+            if(is_just_function_call(startnode[0])): # 如果startnode句是没有返回值的函数调用语句
+                cvs = get_cv(vul_define_node, startnode[0]) #提取出参数中的指针类型变量,将其作为需要向上找的关键变量
+                for cv in cvs:
+                    idenDecl = backward_to_decl(j, startnode[0], cv)
+                    for ide in idenDecl:
+                        new_startnode.append(ide)
+            if(new_startnode != []):
+                startnode = new_startnode
+            
             #从该语句向下切片(只考虑数据依赖)
             ret_for = program_slice_forward(targetPDG, startnode, current_layer + 1)
+            new_ret_for = []
+            if(new_startnode != []):
+                can_append = False
+                for ret_for_tmp in ret_for: #切片截断
+                    if(ret_for_tmp['name'] == startnode[0]['name']):
+                        can_append = True
+                        if(can_append):
+                            new_ret_for.append(ret_for_tmp)
+
+                ret_for = ret_for_tmp
 
             #list_resut_back = return_cross_func(ret_for, testID, 0, ret_for, [], cnt)
             #看这些向下的切片里面有没有跨函数的
@@ -869,7 +794,7 @@ def process_return_func(all_results_list, list_start_node, testID, layer, vulfun
             print(list_result_for)
             
             #获取return之后的切片,这里传进去的list_ret_slice似乎一直都会是[]
-            all_result = process_return_func(list_ret_slice, list_start_node, testID, layer - 1, new_vulfunc, cnt, current_layer + 1)
+            all_result = process_return_func(j, list_ret_slice, list_start_node, testID, layer - 1, new_vulfunc, cnt, current_layer + 1)
             #list_ret_slice.append(list_result_for + all_result)
             print('all_result:')
             print(all_result)

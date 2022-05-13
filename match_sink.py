@@ -14,9 +14,9 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '190'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/freetype2/CVE-2010-2500/CVE-2010-2500_CWE-190_6305b869d86ff415a33576df6d43729673c66eee_ftgrays.c_ftgrays.c_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/freetype2/freetype2-slice/CVE-2010-2500/slices.txt'
+cwe = '125'  # 匹配的漏洞类型
+old_file = '/Users/wangning/Documents/研一/跨函数测试/修改中/添加函数调用依赖/CVE-2017-13012/CVE-2017-13012_CWE-125_8509ef02eceb2bbb479cea10fe4a7ec6395f1a8b_print-icmp.c_print-icmp.c_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/修改中/添加函数调用依赖/CVE-2017-13012/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
 # old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/freetype2/CVE-2014-9673/CVE-2014-9673_CWE-119_35252ae9aa1dd9343e9f4884e9ddb1fee10ef415_ftobjs.c_ftobjs.c_OLD.c"
 # slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/freetype2/CVE-2014-9673/slices.txt"

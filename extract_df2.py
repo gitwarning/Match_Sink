@@ -86,7 +86,7 @@ def write_to_slices_file(slices_content, diff_message, f_add, diff_name):
                     medium_tmp = num_list[0]
                     add_tmp = num_list[1]
 
-                    if(int(this_loc) > (int(start_line) + medium_tmp + add_tmp)):
+                    if(int(this_loc) >= (int(start_line) + medium_tmp + add_tmp)):
                         num_fin += add_tmp
                     elif(int(this_loc) >= (int(start_line) + medium_tmp)):
                         is_add_line = True
@@ -1064,26 +1064,67 @@ if __name__ == "__main__":
                         
                         for var in var_list: #var_list:这一行涉及到的关键变量
                             print('CV: ', var)
-                            idenfitierDecl, successors, variable_name = backward_to_decl(j, list_startnode[0], var)
+                            idenfitierDecl = backward_to_decl(j, list_startnode[0], var)
+                            # idenfitierDecl, successors, variable_name = backward_to_decl(j, list_startnode[0], var)
                             if(idenfitierDecl != []):
                                 print("This cv's declaration line:   " + idenfitierDecl[0]['location'])
                                 print("This cv's declaration code:   " + idenfitierDecl[0]['code'])
                             for idc in idenfitierDecl:
                                 list_startnode_tmp.append(idc)
+                    #如果是没有返回值的函数调用语句，要先找到其指针参数的定义处，从定义处开始切
+                    if(is_just_function_call(list_startnode[0])):
+                        # TODO
+                        para_node = []
+                        cvs = []
+                        current_funcname = isFuncCall(list_startnode[0])[0]
+                        # 获取当前调用函数的PDG
+                        current_pdg = getFuncPDGByNameAndtestID(current_funcname, 'testCode')
+                        if(current_pdg == False):
+                            print("Can't find called function's PDG!")
+                            cvs_tmp = get_call_var(list_startnode[0]['code'].strip(), 1) #直接获取所有的参数
+                            for cc in cvs_tmp:
+                                cvs.append(cc[0])
+                        else:
+                            for current_node in current_pdg.vs:
+                                if(current_node[type] == 'Parameter'):
+                                    para_node.append(current_node)
+                            cvs = get_cv(para_node, list_startnode[0])
+                        for cvvvv in cvs:
+                            idenDecl = backward_to_decl(j, list_startnode[0], cvvvv)
+
+                            for ide in idenDecl:
+                                if(ide not in list_startnode_tmp):
+                                    list_startnode_tmp.append(ide)
+
                     
-                    if(list_startnode_tmp != []):#如果不为空,那么就从定义处开始切片
-                        list_startnode = list_startnode_tmp
+                    # if(list_startnode_tmp != []):#如果不为空,那么就从定义处开始切片
+                    #     list_startnode = list_startnode_tmp
                         #startline = list_startnode_tmp[0]['location'].split(':')[0]
                         #startline_path = list_startnode_tmp[0]['filepath']
 
                     results_back = program_slice_backwards(pdg, list_startnode, 1) #从关注点开始向上切片
                     # print("results_back: ")
                     # print(results_back)
+                    vul_start = []
                     for node_back in results_back:
+                        if(node_back[0]['type'] == 'Parameter'):
+                            vul_start.append(node_back[0])
                         if(node_back[0]['name'] == str(node_id)):
                             results_back.remove(node_back)
                     
-                    results_for = program_slice_forward(pdg, list_startnode, 1) #从关注点开始向下切片
+                    # 如果list_startnode_tmp不为空，则从定义处开始向下切片
+                    results_for = []
+                    if(list_startnode_tmp != []):
+                        can_append = False
+                        results_for_tmp = program_slice_forward(pdg, list_startnode_tmp, 1)
+                        for node_tmp in results_for_tmp:
+                            if(node_tmp[0]['name'] == list_startnode[0]['name']):
+                                can_append = True
+                            if(can_append):
+                                results_for.append(node_tmp)
+                            
+                    else:
+                        results_for = program_slice_forward(pdg, list_startnode, 1) #从关注点开始向下切片
                     # print("results_for:")
                     # print(results_for)
 
@@ -1104,7 +1145,7 @@ if __name__ == "__main__":
                     list_to_crossfunc_for, not_scan_func_list = return_cross_func(results_for, testID, 1, results_for, not_scan_func_list, function_name, layer, 1)
 
                     #新增功能，如果向下找未能找到sink点，则返回到调用该(漏洞)函数的那一行，再向下切片
-                    list_return_for = process_return_func([], list_startnode[0], testID, layer, function_name, cnt, 1)
+                    list_return_for = process_return_func(j, vul_start, list_startnode[0], testID, layer, function_name, cnt, 1)
                     #all_result.append(list_to_crossfunc_for + list_return_for) #TypeError: can only concatenate list (not "NoneType") to list
                     if(list_return_for != []):
                         for func_slice in list_return_for:
