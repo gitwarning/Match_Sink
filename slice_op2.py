@@ -607,7 +607,7 @@ def backward_to_decl(db, startnode, variable_name):
     #tarck backward dataflow to identifierDeclaration of the cirital variable 
     identifierDecl, variable_name = select_predecessors(db,startnode, variable_name)
     if identifierDecl == []:
-        return [],[],variable_name
+        return []
 
     return identifierDecl
 

@@ -14,9 +14,9 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '125'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/修改中/添加函数调用依赖/CVE-2017-13012/CVE-2017-13012_CWE-125_8509ef02eceb2bbb479cea10fe4a7ec6395f1a8b_print-icmp.c_print-icmp.c_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/修改中/添加函数调用依赖/CVE-2017-13012/slices.txt'
+cwe = '119'  # 匹配的漏洞类型
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/CVE-2007-1592/CVE-2007-1592_CWE-119_d35690beda1429544d46c8eb34b2e3a8c37ab299_tcp_ipv6.c_2.1_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/linux/CVE-2007-1592/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
 # old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/freetype2/CVE-2014-9673/CVE-2014-9673_CWE-119_35252ae9aa1dd9343e9f4884e9ddb1fee10ef415_ftobjs.c_ftobjs.c_OLD.c"
 # slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/freetype2/CVE-2014-9673/slices.txt"
@@ -38,10 +38,17 @@ def is_funcdefine(line):
         res_list = line.split(funcname)
         # print(res_list)
         if (res_list[0] != ''):
-            if ('=' not in res_list[0]):
-                return True
+            for sp in sp_operators:
+                if(' ' + sp + ' ' in res_list[0]):
+                    return False
+            for con_key in list_key_words:
+                if(con_key in res_list[0]):
+                    return False
+            return True 
         else:
             return False
+    else:
+        return False
 
 
 # 特殊的cv处理(数组、指针、点操作等)
@@ -310,13 +317,13 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                 if 'location' not in line:
                     func_define = ''
                     num = 0
-                    while 'location' not in after_diff[i + num]:
-                        func_define += after_diff[i + num]
+                    while 'location' not in sink_lines[i + num]:
+                        func_define += sink_lines[i + num]
                         num += 1  # 函数定义跨的行数
-                    func_define += after_diff[i + num]
+                    func_define += sink_lines[i + num]
                 func_name = get_funcname(func_define)[0]
-                if func_name in after_diff[i - 1]:
-                    tmp = after_diff[i - 1]
+                if func_name in sink_lines[i - 1]:
+                    tmp = sink_lines[i - 1]
                     tmp = tmp[tmp.find(func_name):]
                     call_paras = tmp[tmp.find('(') + 1:tmp.find(')')].split(',')  # 从函数名开始向后面查找括号的方式得到函数参数
                     cvv = ' ' + cv + ' '
@@ -694,7 +701,7 @@ def cv_from_expression(tmp_cv):
                 cv = cv.split('#')[0].strip()  # 只要数组名
             cvs.append(cv)
     return cvs
-def match_sources(slices, sink_cv):
+def match_sources(slices, sink_cv, sinks):
     print('.......................source is start.......................')
     source_results = []
     source_lines = []
@@ -774,7 +781,8 @@ def match_sources(slices, sink_cv):
         if ('(key_var lines)' in line):
             break
         this_loc = line.split('location: ')[-1].split(' file: ')[0]
-        source_lines.append(line)
+        if(line not in sinks):
+            source_lines.append(line)
         if (this_loc == loc):
             break
     source_lines.reverse()  # 将切片逆序
@@ -951,11 +959,11 @@ def main():
             if (line.strip() == '------------------------------'):
                 sinks, sink_cv, cv_list = match_sinks(slices)
                 print('.......................sink is over.......................')
-                sources = match_sources(slices, sink_cv)  # 考虑根据sink点来匹配source点
+                sources = match_sources(slices, sink_cv, sinks)  # 考虑根据sink点来匹配source点
                 # 如果匹配到sink点但是没有匹配到source点，考虑使用最开始的CV来匹配source点。
                 # 对于只有整数溢出的sink点sink_cv是空的，所以必须使用这种方法才能匹配source点
                 if sinks and not sources:
-                    sources = match_sources(slices, cv_list[0])
+                    sources = match_sources(slices, cv_list[0], sinks)
                 print('.......................source is over.......................')
                 # print(slices)
                 slices = []
