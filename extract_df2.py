@@ -1086,7 +1086,7 @@ if __name__ == "__main__":
                                 cvs.append(cc[0])
                         else:
                             for current_node in current_pdg.vs:
-                                if(current_node[type] == 'Parameter'):
+                                if(current_node['type'] == 'Parameter'):
                                     para_node.append(current_node)
                             cvs = get_cv(para_node, list_startnode[0])
                         for cvvvv in cvs:
