@@ -780,7 +780,7 @@ def process_return_func(j, vul_define_node, list_start_node, testID, layer, vulf
             if(new_startnode != []):
                 can_append = False
                 for ret_for_tmp in ret_for: #切片截断
-                    if(ret_for_tmp['name'] == startnode[0]['name']):
+                    if(ret_for_tmp[0]['name'] == startnode[0]['name']):
                         can_append = True
                         if(can_append):
                             new_ret_for.append(ret_for_tmp)
