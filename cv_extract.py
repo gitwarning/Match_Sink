@@ -1242,12 +1242,15 @@ def check_complex_type(s, result_file, txt_file):
         sub_typeNum = [] # 存放这一个block含有的删减类型
         add_typeNum = []
         for k,v in conseq_line_dict_tmp.items():
+            init_k = k
             v = v.strip()
             if '\t' in v or '\n' in v or '\r' in v:
                 v = v.replace('\r','').replace('\n','').replace('\t','')
             if((len(v) >= 2) and (v[-1] == '\\') and (v[-2] == ' ')):
                 v = v[:-2]
 
+            if(v[1:].replace(' ', '') == '}'): #整行修改的只有一个}
+                continue
             if ';' in v:
                 index1 = v.rfind(';') #去除句内注释
             elif '{' in v:
@@ -1299,8 +1302,8 @@ def check_complex_type(s, result_file, txt_file):
                     tmp = v
                 else:
                     tmp =  ''
-                
-                if tmp == '': #将语句和type存入数组
+                if (tmp == '') or (tmp != '' and init_k + 1 < len(conseq_line_dict_tmp) and tmp[0] != conseq_line_dict_tmp[init_k+1][0]) or (tmp != '' and init_k + 1 >= len(conseq_line_dict_tmp)): #将语句和type存入数组
+                    tmp = ''
                     conseq_line_dict[k] = v
                     if (v[0] == '-'):
                         del_num = 0
