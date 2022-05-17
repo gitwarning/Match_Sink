@@ -18,8 +18,8 @@ cwe = '119'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/CVE-2007-1592/CVE-2007-1592_CWE-119_d35690beda1429544d46c8eb34b2e3a8c37ab299_tcp_ipv6.c_2.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/linux/CVE-2007-1592/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/CVE-2010-3084/CVE-2010-3084_CWE-119_ee9c5cfad29c8a13199962614b9b16f1c4137ac9_niu.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/CVE-2010-3084/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/CVE-2011-0521/CVE-2011-0521_CWE-189_cb26a24ee9706473f31d34cc259f4dcf45cd0644_av7110_ca.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/CVE-2011-0521/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -604,11 +604,14 @@ def has_cv_fz_left(cv, line):
         if (line[:(len(cv) + 1)] == cv + ' '):
             return True
     # 如果当前行是变量声明行 int buf_size = alac -> max_samples_per_frame * sizeof ( int32_t )
-    left_list = left.split(' ')
+    left_list = left.split(' ')  #存在用户自定义变量的情况ca_slot_info_t * info = ( ca_slot_info_t * ) parg
     if left_list[0] in val_type or (not left_list[0].islower()):
 
         if cv == left_list[-1]:  # int * buf
             return True
+    # 用户自定义变量类型只能是结构体变量
+    if left_list[1] == '*' and cv == left_list[-1].strip():
+        return True
     '''
     if('(' + cv + ' =' in line):
         return True
@@ -878,7 +881,8 @@ def match_sources(slices, sink_cv, sinks):
                 tmp_cv = re.split('[,;]', line.split(' = ')[-1])[0].strip()  # 取出等号右边的变量，把谁的值赋给了CV，CV=b，继续向上跟踪b
                 #处理强制类型转换profile = ( PhotoshopProfile * ) user_data;
                 if tmp_cv[0] == '(':
-                    if len(tmp_cv[:tmp_cv.find(')')].split(' ')) > 1:
+                    iii = tmp_cv[1:tmp_cv.find(')')-1].strip().split(' ')
+                    if len(iii) > 2:
                         tmp_cv = tmp_cv
                     else:
                         tmp_cv = tmp_cv[tmp_cv.find(')')+1:].strip()
