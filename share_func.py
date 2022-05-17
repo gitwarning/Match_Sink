@@ -168,7 +168,7 @@ def is_calculation(line, cv):
         if '*' == line[0]:
             return False
         return True
-    if (cv + ' +') in line:
+    if (cv + ' +') in line or ('+ ' + cv) in line:
         return True
     if (cv + '+=') in line:
         return True
