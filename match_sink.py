@@ -14,12 +14,12 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '189'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/CVE-2007-1592/CVE-2007-1592_CWE-119_d35690beda1429544d46c8eb34b2e3a8c37ab299_tcp_ipv6.c_2.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/linux/CVE-2007-1592/slices.txt'
+cwe = '119'  # 匹配的漏洞类型
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/CVE-2007-1592/CVE-2007-1592_CWE-119_d35690beda1429544d46c8eb34b2e3a8c37ab299_tcp_ipv6.c_2.1_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/linux/CVE-2007-1592/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/CVE-2009-4307/CVE-2009-4307_CWE-189_503358ae01b70ce6909d19dd01287093f6b6271c_super.c_1.1_OLD.c"
-slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/CVE-2009-4307/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/CVE-2010-3084/CVE-2010-3084_CWE-119_ee9c5cfad29c8a13199962614b9b16f1c4137ac9_niu.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/CVE-2010-3084/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
