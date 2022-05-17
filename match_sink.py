@@ -14,12 +14,12 @@ from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
-cwe = '119'  # 匹配的漏洞类型
+cwe = '189'  # 匹配的漏洞类型
 old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/CVE-2007-1592/CVE-2007-1592_CWE-119_d35690beda1429544d46c8eb34b2e3a8c37ab299_tcp_ipv6.c_2.1_OLD.c'
 slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/linux/CVE-2007-1592/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-# old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/freetype2/CVE-2014-9673/CVE-2014-9673_CWE-119_35252ae9aa1dd9343e9f4884e9ddb1fee10ef415_ftobjs.c_ftobjs.c_OLD.c"
-# slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/freetype2/CVE-2014-9673/slices.txt"
+old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/CVE-2009-4307/CVE-2009-4307_CWE-189_503358ae01b70ce6909d19dd01287093f6b6271c_super.c_1.1_OLD.c"
+slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/CVE-2009-4307/slices.txt"
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
@@ -44,7 +44,7 @@ def is_funcdefine(line):
             for con_key in list_key_words:
                 if(con_key in res_list[0]):
                     return False
-            return True 
+            return True
         else:
             return False
     else:
@@ -358,7 +358,9 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
             # 进行sink点匹配
             # 对于不同的漏洞类型进行了封装
             if cwe == '189' or cwe == '190' or cwe == '191':
-                array_sink, pointer_sink, risk_func_sink, calculation_sink = sink_189(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, calculation_sink, point_var)
+                array_sink, pointer_sink, risk_func_sink, calculation_sink, division_sink = sink_189(line, cv, sink_results, array_sink,
+                                                                                      sink_cv, pointer_sink, risk_func_sink,
+                                                                                      calculation_sink, point_var, division_sink)
             elif cwe == '119' or cwe == '125' or cwe == '787' or cwe == '120':
                 array_sink, pointer_sink, risk_func_sink = sink_119(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, point_var)
             elif cwe == '617':
