@@ -15,8 +15,8 @@ from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 
 cwe = '119'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/CVE-2007-1592/CVE-2007-1592_CWE-119_d35690beda1429544d46c8eb34b2e3a8c37ab299_tcp_ipv6.c_2.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/linux/CVE-2007-1592/slices.txt'
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/CVE-2009-2695/CVE-2009-2695_CWE-119_8cf948e744e0218af604c32edecde10006dc8e9e_hooks.c_4.0_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/linux/CVE-2009-2695/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
 # old_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/freetype2/CVE-2014-9673/CVE-2014-9673_CWE-119_35252ae9aa1dd9343e9f4884e9ddb1fee10ef415_ftobjs.c_ftobjs.c_OLD.c"
 # slice_file = "E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/freetype2/CVE-2014-9673/slices.txt"
@@ -781,8 +781,7 @@ def match_sources(slices, sink_cv, sinks):
         if ('(key_var lines)' in line):
             break
         this_loc = line.split('location: ')[-1].split(' file: ')[0]
-        if(line not in sinks):
-            source_lines.append(line)
+        source_lines.append(line)
         if (this_loc == loc):
             break
     source_lines.reverse()  # 将切片逆序
@@ -826,9 +825,10 @@ def match_sources(slices, sink_cv, sinks):
                         if 'sizeof' in funcname:
                             funcname.remove('sizeof')
                         if len(funcname) == 1 and funcname[0] not in C_func:
-                            source_results.append(line)
-                            flag = 1
-                            break
+                            if line not in sinks:
+                                source_results.append(line)
+                                flag = 1
+                                break
                         # return source_results
         if (flag == 1):
             print('外部函数定义')
