@@ -66,7 +66,7 @@ def is_risk_func(line, cv):
         return True
     elif ('get_bits' in line):
         return True
-    elif ('put_bits' in line):
+    elif ('put_bits' in line) or 'skb_put' in line:
         return True
     elif ('copy' in line) and 'copy_size' not in line:
         return True
