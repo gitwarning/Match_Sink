@@ -53,7 +53,11 @@ def is_risk_func(line, cv):
     if ('memcpy' in line):  # 之后换成正则表达式应该会更好
         return True
     elif ('alloc' in line):
-        return True
+        if "=" in line:
+            if "alloc" in line.split('=')[-1]:
+                return True
+        else:
+            return True
     elif ('memset' in line):
         return True
     elif 'strncpy' in line:
@@ -118,6 +122,8 @@ def is_array(line, cv):
     # ptr += s -> frame -> linesize [ 0 ] 不算数组访问越界吧
     if (cv + ' [ 0 ]') in line:
         return False
+    if cv + '[%d]' in line:  # n_entries[%d]不是访问
+        return False
     if '[ 0 ]' in line:
         line = line.replace('[ 0 ]', '')
         if '[' and ']' not in line:
@@ -166,7 +172,7 @@ def is_calculation(line, cv):
         if '*' == line[0]:
             return False
         return True
-    if (cv + ' +') in line:
+    if (cv + ' +') in line or ('+ ' + cv) in line:
         return True
     if (cv + '+=') in line:
         return True
