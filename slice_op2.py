@@ -690,6 +690,8 @@ def is_just_function_call(startnode):
         if('=' in func_before):
             if(func_before.split(' = ')[0].strip() == 'error'):
                 return True
+            elif(func_before.split(' = ')[0].strip() == 'ret'):
+                return True
             else:
                 return False
         else:
