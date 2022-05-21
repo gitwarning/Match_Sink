@@ -62,6 +62,10 @@ def is_risk_func(line, cv):
         return True
     elif 'strncpy' in line:
         return True
+    elif 'strcmp' in line:
+        return True
+    elif('RTL_W16' in line):
+        return True
     elif ('bytestream2_get_buffer' in line):
         return True
     elif ('get_bits' in line):
@@ -72,7 +76,7 @@ def is_risk_func(line, cv):
         return True
     elif ('recv' in line and 'recv ->' not in line):
         return True
-    elif ('Write' in line or 'write' in line) and '_write' not in line:
+    elif ('Write' in line or 'write' in line): #and '_write' not in line:
         return True
     elif 'read' in line or 'Read' in line:
         return True
