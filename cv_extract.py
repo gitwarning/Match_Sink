@@ -457,11 +457,16 @@ def judge_type(s):
                 funcname = res2_1[0]
                 return_type = s.split(funcname)
                 for vt in val_type:
-                    if(return_type[0].find(vt) != -1):
-                        if(s[-1] == ';'): #函数调用前面有返回值类型，且该行以分号结尾
-                            return "Fun-Declaration"
+                    if(return_type[0].find(vt) != -1 and s[-1] == ';'):#函数调用前面有返回值类型，且该行以分号结尾
+                        left_bracket = s.find('[')
+                        right_bracket = s.rfind(']')
+                        func_loc = s.find(funcname)
+                        if(left_bracket != -1 and left_bracket < func_loc and right_bracket > func_loc):
+                            return "Var-Declaration"
                         else:
-                            return "Fun-Head"
+                            return "Fun-Declaration"
+                    elif(return_type[0].find(vt) != -1 and s[-1] != ';'):
+                        return "Fun-Head"
                 return "Fun-Call"
             else:
                 return "Fun-Call"

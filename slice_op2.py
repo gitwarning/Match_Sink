@@ -649,6 +649,7 @@ def select_predecessors(db, startnode, variable_name):
                 identifierDecl.append(p_node)
     if identifierDecl == []: #如果没有找到，就向上一级变量回溯
         class_name = ''
+        array_name = ''
         if "->" in variable_name:
             class_name = variable_name.split("->")[0]
             for p_node in predecessors:
@@ -669,6 +670,16 @@ def select_predecessors(db, startnode, variable_name):
                     if class_name in code:
                         identifierDecl.append(p_node)
                         variable_name = class_name
+                        break
+        elif "[" in variable_name and "]" in variable_name:
+            array_name = variable_name.split('[')[0]
+            for p_node in predecessors:
+                node_type = p_node['type']
+                code = p_node['code']
+                if node_type == 'IdentifierDeclStatement' or node_type == 'Parameter':
+                    if array_name in code:
+                        identifierDecl.append(p_node)
+                        variable_name = array_name
                         break
 
         else:
