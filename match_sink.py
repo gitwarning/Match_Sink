@@ -50,6 +50,24 @@ def is_funcdefine(line):
     else:
         return False
 
+# 判断是不是数字
+def is_number(s):
+    if(s[:2] == '0x'):
+        return True
+    try:
+        float(s)
+        return True
+    except ValueError:
+        pass
+ 
+    try:
+        import unicodedata
+        unicodedata.numeric(s)
+        return True
+    except (TypeError, ValueError):
+        pass
+ 
+    return False
 
 # 特殊的cv处理(数组、指针、点操作等)
 # 如果是数组的话，就取数组名，如果是指针的话就加空格
@@ -288,13 +306,15 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
         if ('[' in cv):
             array_name = cv[:(cv.find('['))]
             if array_name not in cv_list[epoch]:
-                cv_list[epoch].append(cv[:(cv.find('['))])  # 先把数组头放进去
+                # cv_list[epoch].append(cv[:(cv.find('['))])  # 先把数组头放进去
+                cv_list[epoch] = append_cv(cv_list[epoch], cv[:(cv.find('['))])
         sp_cv = special_cv_process(cv)  # 特殊变量的处理
         if (len(sp_cv) > 1):
             cv = sp_cv[0]
             for i in range(1, len(sp_cv)):  # 这种是因为提取数组下标提取出了多个变量
                 if sp_cv[i] not in cv_list[epoch]:
-                    cv_list[epoch].append(sp_cv[i])
+                    # cv_list[epoch].append(sp_cv[i])
+                    cv_list[epoch] = append_cv(cv_list[epoch], sp_cv[i])
         else:
             cv = sp_cv[0]
         if cv.isupper():  # 如果cv全是大写，一般是宏定义的常数，这种也跳过
@@ -335,7 +355,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                         change_cv = left_process(change_cv, 'space')
                         if change_cv != cv and change_cv not in cv_list[epoch]:
                             if change_cv != '...':
-                                cv_list[epoch].append(change_cv)
+                                # cv_list[epoch].append(change_cv)
+                                cv_list[epoch] = append_cv(cv_list[epoch], change_cv)
                                 print("当前CV跨函数，经转化后新的CV是：", change_cv)
                 # continue return 语句中可能含有sink点
             # 如果是函数调用行，需要判断是不是对漏洞函数的调用，如果是且将关键变量作为返回值，需要把返回后的值加入关键变量列表
@@ -347,7 +368,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                     return_cv = line.split(' = ')[0].split(' ')[
                         -1].strip()  # int line = advance_line ( dst , line , stride , & y , h , interleave );
                     if return_cv != cv and return_cv not in cv_list[epoch]:
-                        cv_list[epoch].append(return_cv)
+                        # cv_list[epoch].append(return_cv)
+                        cv_list[epoch] = append_cv(cv_list[epoch], return_cv)
                         return_flag = False
                         print('当前CV经过漏洞函数返回，经转化后新的CV是：', return_cv)
             if 'for ' in line:
@@ -412,7 +434,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                     tmp_cv = tmp_cv.split(', ')[-1]
                 if tmp_cv not in cv_list[epoch + 1] and tmp_cv not in cv_list[epoch]:
                     tmp_cv = tmp_cv+'$$'+str(i)
-                    cv_list[epoch + 1].append(tmp_cv)
+                    # cv_list[epoch + 1].append(tmp_cv)
+                    cv_list[epoch + 1] = append_cv(cv_list[epoch + 1], tmp_cv)
                     print('CV转化行：', line)
                     print('转换后的CV：', tmp_cv)
     # 当前所有CV都没有匹配到sink点，将其上一级加入到下一次要匹配的CV中cvList[epoch+1]
@@ -422,13 +445,15 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
             if (len(sp_cv) > 1):
                 cv = sp_cv[0]
                 for i in range(1, len(sp_cv)):  # 这种是因为提取数组下标提取出了多个变量
-                    cv_list[epoch].append(sp_cv[i])
+                    # cv_list[epoch].append(sp_cv[i])
+                    cv_list[epoch] = append_cv(cv_list[epoch], sp_cv[i])
             else:
                 cv = sp_cv[0]
             new_cv = left_process(cv, 'up')
             if new_cv not in cv_list[epoch + 1] and new_cv not in cv_list[epoch]:
                 print('CV的上一级是：', new_cv)
-                cv_list[epoch + 1].append(new_cv)
+                # cv_list[epoch + 1].append(new_cv)
+                cv_list[epoch + 1] = append_cv(cv_list[epoch + 1], new_cv)
     print(epoch)
     print("如果当前cv列表没有找到sink点，下次查找的cv是：", cv_list[epoch + 1])
 
@@ -706,6 +731,16 @@ def cv_from_expression(tmp_cv):
                 cv = cv.split('#')[0].strip()  # 只要数组名
             cvs.append(cv)
     return cvs
+
+def append_cv(sink_cv, new_cv):
+    if(new_cv in sink_cv):
+        return sink_cv
+    if(is_number(new_cv) == True):
+        return sink_cv
+    
+    sink_cv.append(new_cv)
+    return sink_cv
+
 def match_sources(slices, sink_cv, sinks):
     print('.......................source is start.......................')
     source_results = []
@@ -892,7 +927,8 @@ def match_sources(slices, sink_cv, sinks):
                     change_cvs = list(set(change_cvs))  # 对从表达式中得到的cv去重
                     for change in change_cvs:
                         change = change + '$$' + str(i)
-                        sink_cv.append(change)
+                        # sink_cv.append(change)
+                        sink_cv = append_cv(sink_cv, change)
                     flag = 2
                     break
                 else:
@@ -909,9 +945,8 @@ def match_sources(slices, sink_cv, sinks):
         # 如果是指针/数组类型，就去掉具体变量，把前面的变量作为cv找；例如s->size变成s
         if (len(source_results) == num):  # 针对该变量没有找到source点(即经过source寻找之后source_results里没有增加新的数据)
             new_cv = left_process(tmp_cv, 'up')
-            if new_cv not in sink_cv:
-                sink_cv.append(new_cv)
-                print('当前CV没有匹配到source点，开始匹配CV的上一级。CV的上一级是：', new_cv)
+            sink_cv = append_cv(sink_cv, new_cv)
+            print('当前CV没有匹配到source点，开始匹配CV的上一级。CV的上一级是：', new_cv)
         '''
         当最后找到的source行中没有=时，有两种情况:
         1. 该变量为函数内定义，此时需要在漏洞函数中往下找，找到第一次赋值的地方  ==》如果第一次赋值是int A=B，还需要继续向上找B的值
