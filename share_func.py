@@ -1,7 +1,10 @@
+import re
 """
 记录一些匹配漏洞sink点类型所需要的函数，这些函数可能被不同的sink点类型调用到
 
 """
+
+list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 
 sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
 
@@ -46,46 +49,60 @@ def has_cv(cv, line):
 
     return False
 
+def get_funcname(code):
+    # pattern = "((?:_|[A-Za-z])\w*(?:\s(?:\.|::|\->|)\s(?:_|[A-Za-z])\w*)*)\s\("
+    pattern = "((?:_|[A-Za-z])\w*(?:\s(?:\.|::|\->|)\s(?:_|[A-Za-z])\w*)*)\s?\("
+    result = re.findall(pattern, code)
+
+    i = 0
+    while i < len(result):
+        if result[i] in list_key_words:
+            del result[i]
+        else:
+            i += 1
+
+    return result
+
 def is_risk_func(line, cv):
     # print('this is a test.')
     if not has_cv(cv, line):  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
         return False
-    if ('memcpy' in line):  # 之后换成正则表达式应该会更好
-        return True
-    elif ('alloc' in line):
-        if "=" in line:
-            if "alloc" in line.split('=')[-1]:
-                return True
-        else:
-            return True
-    elif ('memset' in line):
-        return True
-    elif 'strncpy' in line:
-        return True
-    elif 'strcmp' in line:
-        return True
-    elif('RTL_W16' in line):
-        return True
-    elif ('bytestream2_get_buffer' in line):
-        return True
-    elif ('get_bits' in line):
-        return True
-    elif ('put_bits' in line) or 'skb_put' in line:
-        return True
-    elif ('copy' in line) and 'copy_size' not in line:
-        return True
-    elif ('recv' in line and 'recv ->' not in line):
-        return True
-    elif ('Write' in line or 'write' in line): #and '_write' not in line:
-        return True
-    elif 'read' in line or 'Read' in line:
-        return True
-    elif 'EXTRACT' in line:  # 针对tcpdump软件的EXTRACT_32BITS宏定义访问指针
-        return True
-    elif 'TT_NEXT_U' in line: #针对freetype2软件中的TT_NEXT_ULONG/INT(...)宏定义
-        return True
-    else:
+    funcnames = get_funcname(line)
+    if(funcnames == []):
         return False
+    for func in funcnames:
+        if ('memcpy' in func):  # 之后换成正则表达式应该会更好
+            return True
+        elif ('alloc' in func):
+            return True
+        elif ('memset' in func):
+            return True
+        elif 'strncpy' in func:
+            return True
+        elif 'strcmp' in func:
+            return True
+        elif('RTL_W16' in func):
+            return True
+        elif ('bytestream2_get_buffer' in func):
+            return True
+        elif ('get_bits' in func):
+            return True
+        elif ('put_bits' in func) or 'skb_put' in func:
+            return True
+        elif ('copy' in func) and 'copy_size' not in func:
+            return True
+        elif ('recv' in func and 'recv ->' not in func):
+            return True
+        elif ('Write' in func or 'write' in func): #and '_write' not in line:
+            return True
+        elif 'read' in func or 'Read' in func:
+            return True
+        elif 'EXTRACT' in func:  # 针对tcpdump软件的EXTRACT_32BITS宏定义访问指针
+            return True
+        elif 'TT_NEXT_U' in func: #针对freetype2软件中的TT_NEXT_ULONG/INT(...)宏定义
+            return True
+        else:
+            return False
 
 
 def is_pointer(line, cv, point_var):  # 需要更新切片文件才能测试,可暂定

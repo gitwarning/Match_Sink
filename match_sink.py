@@ -15,9 +15,9 @@ from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 from slice_op2 import get_call_var
 
-cwe = '119'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/PatchDB/16_Typedata/Diff_NEW_OLD/linux/CVE-2011-4604/CVE-2011-4604_CWE-119_b5a1eeef04cc7859f34dec9b72ea1b28e4aba07c_icmp_socket.c_1.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/PatchDB/16_Typedata/Diff_NEW_OLD/linux/CVE-2011-4604/slices.txt'
+cwe = '189'  # 匹配的漏洞类型
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/0518/CVE-2013-2094/CVE-2013-2094_CWE-189_8176cced706b5e5d15887584150764894e94e02f_core.c_1.2_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/0518/linux/CVE-2013-2094/slices.txt'
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/CVE-2007-1592/CVE-2007-1592_CWE-119_d35690beda1429544d46c8eb34b2e3a8c37ab299_tcp_ipv6.c_2.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/linux/CVE-2007-1592/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
