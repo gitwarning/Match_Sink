@@ -13,10 +13,11 @@ from sink_CWE617 import sink_617
 from sink_CWE772 import sink_772
 from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
+from slice_op2 import get_call_var
 
 cwe = '119'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/CVE-2009-2695/CVE-2009-2695_CWE-119_8cf948e744e0218af604c32edecde10006dc8e9e_hooks.c_4.0_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/linux/CVE-2009-2695/slices.txt'
+old_file = '/Users/wangning/Documents/研一/PatchDB/16_Typedata/Diff_NEW_OLD/linux/CVE-2011-4604/CVE-2011-4604_CWE-119_b5a1eeef04cc7859f34dec9b72ea1b28e4aba07c_icmp_socket.c_1.1_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/PatchDB/16_Typedata/Diff_NEW_OLD/linux/CVE-2011-4604/slices.txt'
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/CVE-2007-1592/CVE-2007-1592_CWE-119_d35690beda1429544d46c8eb34b2e3a8c37ab299_tcp_ipv6.c_2.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/linux/CVE-2007-1592/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
@@ -652,7 +653,8 @@ def has_cv_fz_left(cv, line):
 def find_in_vulfile(tmp_line, cv):
     location = 0
     tmp_file = tmp_line.split(' file: ')[-1].split('/')[-1]
-    tmp_loc = tmp_line.split('location: ')[-1].split(' file: ')[0]
+    tmp_loc = tmp_line.split('location: ')[-1].split(' cross_layer: ')[0]
+    tmp_layer = tmp_line.split(' cross_layer: ')[-1].split(' file: ')[0]
     if not tmp_loc.isnumeric():
         print("当前行没有location，是：", tmp_loc)
         return ''
@@ -663,7 +665,7 @@ def find_in_vulfile(tmp_line, cv):
         if (location <= int(tmp_loc)):
             continue
         if (has_cv_fz_left(cv, line)):
-            result = line.strip() + ' location: ' + str(location) + ' file: ' + tmp_file
+            result = line.strip() + ' location: ' + str(location) + ' cross_layer: ' + tmp_layer + ' file: ' + tmp_file
             return result
 
     return ''  # 如果没找到的话,就返回空
@@ -738,14 +740,13 @@ def append_cv(sink_cv, new_cv):
     if(is_number(new_cv) == True):
         return sink_cv
     
-    sink_cv.append(new_cv)
+    sink_cv.append(new_cv.strip())
     return sink_cv
 
 def match_sources(slices, sink_cv, sinks):
     print('.......................source is start.......................')
     source_results = []
     source_lines = []
-
     vulf_define = ''
     if '@@' in slices[0]:
         # tmp = slices[0].split(' @@ ')[-2]
@@ -817,10 +818,18 @@ def match_sources(slices, sink_cv, sinks):
     #
     # cvs = ast.literal_eval(slices[0][start:(end + 1)])
     # print(cvs)
+    pre_line = ''
     for line in slices:
         if ('(key_var lines)' in line):
             break
-        this_loc = line.split('location: ')[-1].split(' file: ')[0]
+        if(pre_line != ''):
+            line = pre_line.strip() + line
+        if(' location: ' not in line and line != slices[0]):
+            pre_line = line
+            continue
+        else:
+            pre_line = ''
+        this_loc = line.split('location: ')[-1].split(' cross_layer: ')[0]
         source_lines.append(line)
         if (this_loc == loc):
             break
@@ -865,7 +874,12 @@ def match_sources(slices, sink_cv, sinks):
                         if 'sizeof' in funcname:
                             funcname.remove('sizeof')
                         if len(funcname) == 1 and funcname[0] not in C_func:
-                            if line not in sinks:
+                            if cv == "error" or cv == "err" or cv == "errors":
+                                new_cv_list = get_call_var(line, 1)
+                                print('当前匹配行是返回值为error的函数调用，其函数参数为：', new_cv_list)
+                                for new_cv in new_cv_list:
+                                    sink_cv = append_cv(sink_cv, new_cv[0])
+                            elif line not in sinks:
                                 source_results.append(line)
                                 flag = 1
                                 break
@@ -963,12 +977,12 @@ def match_sources(slices, sink_cv, sinks):
                 source_results.append(vulf_define)
             else:
                 source_next_line = find_in_vulfile(tmp_line, cv)
-                if (source_next_line == ''):
+                if (source_next_line == '' and tmp_line not in sinks):
                     source_results.append(tmp_line)
-                else:
+                elif(source_next_line not in sinks):
                     source_results.append(source_next_line)
         else:
-            if not source_results:  # 当source点匹配结果为空，就把暂存的含有cv且不含等号（for循环，函数调用）的行加进去
+            if not source_results and tmp_line not in sinks:  # 当source点匹配结果为空，就把暂存的含有cv且不含等号（for循环，函数调用）的行加进去
                 source_results.append(tmp_line)
 
         print(cv, '匹配完成============')
