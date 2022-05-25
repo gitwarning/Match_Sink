@@ -330,6 +330,11 @@ def split_var(var):
         for opr in operator_list:
             if opr in var:
                 finish_flag = 1
+                if opr == '==' or opr == '!=': #如果是==或者!=这种，需要把比较符右边的变量也作为关键变量
+                    right_var = var.split(opr)[-1]
+                    if((is_number(right_var) == False) and (is_define(right_var) == False)):
+                        var_list_tmp.append(right_var)
+                
                 left_var = var.split(opr)[0]
                 if((is_number(left_var) == False) and (is_define(left_var) == False)):
                     var_list_tmp.append(left_var)
@@ -457,11 +462,16 @@ def judge_type(s):
                 funcname = res2_1[0]
                 return_type = s.split(funcname)
                 for vt in val_type:
-                    if(return_type[0].find(vt) != -1):
-                        if(s[-1] == ';'): #函数调用前面有返回值类型，且该行以分号结尾
-                            return "Fun-Declaration"
+                    if(return_type[0].find(vt) != -1 and s[-1] == ';'):#函数调用前面有返回值类型，且该行以分号结尾
+                        left_bracket = s.find('[')
+                        right_bracket = s.rfind(']')
+                        func_loc = s.find(funcname)
+                        if(left_bracket != -1 and left_bracket < func_loc and right_bracket > func_loc):
+                            return "Var-Declaration"
                         else:
-                            return "Fun-Head"
+                            return "Fun-Declaration"
+                    elif(return_type[0].find(vt) != -1 and s[-1] != ';'):
+                        return "Fun-Head"
                 return "Fun-Call"
             else:
                 return "Fun-Call"
@@ -857,65 +867,66 @@ def get_cond_var(s_list, flag):
     # print('s_list: ', s_list)
     # s_list = process_condition(s, flag)
     res_vars = [] #保存要返回去的关键变量
-    for base_s in s_list:
-        tmp = split_var(base_s)
-        if len(tmp) >= 1:
-            base_s = tmp[0]
+    for base_s0 in s_list:
+        tmp = split_var(base_s0)
+        # if len(tmp) >= 1:
+        #     base_s = tmp[0]
 
-        base_list = []
-        base_s = base_s.strip()
+        for base_s in tmp:
+            base_list = []
+            base_s = base_s.strip()
 
-        if(base_s.find('(unsigned)') != -1):
-            index = base_s.find('(unsigned)')
-            base_s = base_s[(index + 10):]
+            if(base_s.find('(unsigned)') != -1):
+                index = base_s.find('(unsigned)')
+                base_s = base_s[(index + 10):]
 
-        pat = re.compile(r'.*\[(.*?)\].*', re.MULTILINE) # 看是不是数组变量
-        res = pat.findall(base_s) #检查=前面，也就是变量所在的位置有没有[]
-        if (res):
-            base_list.append(base_s)
-        else:
-            base_list = re.split('[, ]|[ + ]|[ - ]|[ * ]|[ / ]|[; ][ & ]', base_s)
-
-        if(flag == 1):           
-            base_list = [i for i in base_list if ((i != '') and (i != '-') and (i != '+') and (i != '/') and (i != '*') and (i != '&'))] # 去除空和其它字符
-        else:
-            base_list = [i for i in base_list if ((i != '') and (i != '-') and (i != '+') and (i != '/') and (i != '<') and (i != '>') and (i != '!') and (i != '=') and (i != '*') and (i != '&'))] #去除空和其它字符
-
-        var_list_res = []
-        
-        for var in base_list: #>\<等操作符切分表达式
-            sym_L  = var.rfind('<')
-            sym_R = var.find(">")
-            if sym_R!= -1 and sym_L != -1 and '->' not in var[sym_L:sym_R] and ' ' not in var[sym_L:sym_R]:
-                var = var.split(">")[-1]
-            var_list_tmp = split_var(var)
-            for var in var_list_tmp:
-                if var == '':
-                    continue
-                var_list_res.append(var)
-
-        count_for_con = 0
-        for base_var in var_list_res: #去除括号
-            start = base_var.rfind('(')
-            end = base_var.find(')')
-
-            if((start != -1) and (end != -1)):
-                res = base_var[start+1:end] #去除if的括号 a < 0
-                if count_for_con == 0:
-                    if base_var.startswith("((") and end != len(base_var) - 1:
-                        res = base_var[end + 1:]
-                else:
-                    if base_var.startswith("(") and end != len(base_var) - 1:
-                        res = base_var[end + 1:]
-            elif(start != -1):
-                res = base_var[start+1:]
-            elif(end != -1):
-                res = base_var[:end]
+            pat = re.compile(r'.*\[(.*?)\].*', re.MULTILINE) # 看是不是数组变量
+            res = pat.findall(base_s) #检查=前面，也就是变量所在的位置有没有[]
+            if (res):
+                base_list.append(base_s)
             else:
-                res = base_var
-            count_for_con += 1
+                base_list = re.split('[, ]|[ + ]|[ - ]|[ * ]|[ / ]|[; ][ & ]', base_s)
+
+            if(flag == 1):           
+                base_list = [i for i in base_list if ((i != '') and (i != '-') and (i != '+') and (i != '/') and (i != '*') and (i != '&'))] # 去除空和其它字符
+            else:
+                base_list = [i for i in base_list if ((i != '') and (i != '-') and (i != '+') and (i != '/') and (i != '<') and (i != '>') and (i != '!') and (i != '=') and (i != '*') and (i != '&'))] #去除空和其它字符
+
+            var_list_res = []
             
-            res_vars.append(res)
+            for var in base_list: #>\<等操作符切分表达式
+                sym_L  = var.rfind('<')
+                sym_R = var.find(">")
+                if sym_R!= -1 and sym_L != -1 and '->' not in var[sym_L:sym_R] and ' ' not in var[sym_L:sym_R]:
+                    var = var.split(">")[-1]
+                var_list_tmp = split_var(var)
+                for var in var_list_tmp:
+                    if var == '':
+                        continue
+                    var_list_res.append(var)
+
+            count_for_con = 0
+            for base_var in var_list_res: #去除括号
+                start = base_var.rfind('(')
+                end = base_var.find(')')
+
+                if((start != -1) and (end != -1)):
+                    res = base_var[start+1:end] #去除if的括号 a < 0
+                    if count_for_con == 0:
+                        if base_var.startswith("((") and end != len(base_var) - 1:
+                            res = base_var[end + 1:]
+                    else:
+                        if base_var.startswith("(") and end != len(base_var) - 1:
+                            res = base_var[end + 1:]
+                elif(start != -1):
+                    res = base_var[start+1:]
+                elif(end != -1):
+                    res = base_var[:end]
+                else:
+                    res = base_var
+                count_for_con += 1
+                
+                res_vars.append(res)
             
     res_vars = check_var_again(res_vars)
     return res_vars
