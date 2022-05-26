@@ -73,6 +73,8 @@ def is_risk_func(line, cv):
     for func in funcnames:
         if ('memcpy' in func):  # 之后换成正则表达式应该会更好
             return True
+        elif('memmove' in func):
+            return True
         elif ('alloc' in func):
             return True
         elif ('memset' in func):
