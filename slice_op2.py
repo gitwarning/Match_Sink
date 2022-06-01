@@ -803,7 +803,7 @@ def process_return_func(j, vul_define_node, list_start_node, testID, layer, vulf
                         if(can_append):
                             new_ret_for.append(ret_for_tmp)
 
-                ret_for = ret_for_tmp
+                ret_for = new_ret_for
 
             #list_resut_back = return_cross_func(ret_for, testID, 0, ret_for, [], cnt)
             #看这些向下的切片里面有没有跨函数的
