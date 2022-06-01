@@ -1,9 +1,8 @@
-import re
 """
 记录一些匹配漏洞sink点类型所需要的函数，这些函数可能被不同的sink点类型调用到
 
 """
-
+import re
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 
 sp_operators = ['+', '-', '/', '*', '%', '&', '|', '=']
@@ -106,7 +105,19 @@ def is_risk_func(line, cv):
         else:
             return False
 
-
+def is_scatterlist_func(line, cv):
+    if not has_cv(cv, line):  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
+        return False
+    funcnames = get_funcname(line)
+    if(funcnames == []):
+        return False
+    for func in funcnames:
+        if "sg_set_buf" in func:
+            return True
+        elif 'usb_control_msg' in line or'usb_bulk_msg' in line:
+            return True
+        else:
+            return False
 def is_pointer(line, cv, point_var):  # 需要更新切片文件才能测试,可暂定
     if (cv in point_var):
         # 变量是指针且参与运算
@@ -137,8 +148,13 @@ def is_pointer(line, cv, point_var):  # 需要更新切片文件才能测试,可
 
 
 # 关键变量为数组下标或者作为数组的使用
+#需要排除掉数组定义行 u8 odata [ 16 ]
 def is_array(line, cv):
     # ptr += s -> frame -> linesize [ 0 ] 不算数组访问越界吧
+    tmps = line[:line.find('[')].strip().split(" ")
+    index = line[line.find('[') + 1:line.find(']')].strip()
+    if index.isdigit() and len(tmps) == 2: #该行是数组定义
+        return False
     if (cv + ' [ 0 ]') in line:
         return False
     if cv + '[%d]' in line:  # n_entries[%d]不是访问

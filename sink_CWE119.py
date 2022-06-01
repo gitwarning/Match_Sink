@@ -1,7 +1,7 @@
 from share_func import *
 
 
-def sink_119(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, point_var):
+def sink_119(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_func_sink, scatterlist_sink, point_var):
     if is_array(line, cv) and array_sink:
         print('sink点是数组访问越界：', line)
         sink_results.append(line)
@@ -17,4 +17,9 @@ def sink_119(line, cv, sink_results, array_sink, sink_cv, pointer_sink, risk_fun
         sink_results.append(line)
         sink_cv.append(cv)
         risk_func_sink = False
-    return array_sink, pointer_sink, risk_func_sink
+    if is_scatterlist_func(line, cv) and scatterlist_sink:
+        print("sink点是DMA相关函数使用：", line)
+        sink_results.append(line)
+        sink_cv.append(cv)
+        scatterlist_sink = False
+    return array_sink, pointer_sink, risk_func_sink, scatterlist_sink
