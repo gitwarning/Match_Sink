@@ -86,7 +86,7 @@ def write_to_slices_file(slices_content, diff_message, f_add, diff_name):
                     medium_tmp = num_list[0]
                     add_tmp = num_list[1]
 
-                    if(int(this_loc) >= (int(start_line) + medium_tmp + add_tmp)):
+                    if(int(this_loc) > (int(start_line) + medium_tmp + add_tmp)):
                         num_fin += add_tmp
                     elif(int(this_loc) >= (int(start_line) + medium_tmp)):
                         is_add_line = True

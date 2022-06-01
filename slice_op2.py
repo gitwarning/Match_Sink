@@ -764,7 +764,10 @@ def process_return_func(j, vul_define_node, list_start_node, testID, layer, vulf
             targetPDG = item[1]
             print(item)
             startnode = []
+            new_define_node = []
             for n in targetPDG.vs:
+                if(n['type'] == 'Parameter'):
+                    new_define_node.append(n)
                 if(n['name'] == item[0]):
                     list_start_node = n #将下次循环的startnode换成新的函数
                     # new_vulfunc = isFuncCall(list_start_node)[0]
@@ -776,6 +779,8 @@ def process_return_func(j, vul_define_node, list_start_node, testID, layer, vulf
                     break
             if(startnode == []):
                 return []
+            if(new_define_node == []):
+                print('Function parameter node not found.')
             
             new_startnode = []
             if(is_just_function_call(startnode[0])): # 如果startnode句是没有返回值的函数调用语句
@@ -807,7 +812,7 @@ def process_return_func(j, vul_define_node, list_start_node, testID, layer, vulf
             print(list_result_for)
             
             #获取return之后的切片,这里传进去的list_ret_slice似乎一直都会是[]
-            all_result = process_return_func(j, list_ret_slice, list_start_node, testID, layer - 1, new_vulfunc, cnt, current_layer + 1)
+            all_result = process_return_func(j, new_define_node, list_start_node, testID, layer - 1, new_vulfunc, cnt, current_layer + 1)
             #list_ret_slice.append(list_result_for + all_result)
             print('all_result:')
             print(all_result)
