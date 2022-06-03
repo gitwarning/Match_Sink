@@ -973,7 +973,8 @@ def return_cross_func(to_scan_list, testID, slicetype, list_result_node, not_sca
                                     param_node.append(vertex)
                                 elif vertex['type'] == 'Function':
                                     FuncEntryNode = vertex
-
+                                    
+                            result_list = []
                             if param_node != []:
                                 result_list = program_slice_forward(pdg, param_node, current_layer + 1) # 向下调用了一层，current_ayer+1
                             else:
