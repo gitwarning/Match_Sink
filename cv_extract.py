@@ -4,6 +4,7 @@ import os
 import re
 import pickle as pkl
 import json
+from turtle import left
 #from typing import Counter
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
             'uint32_t', 'struct', 'guint', 'size_t', 'uint64_t']
@@ -118,9 +119,9 @@ def process(s):
     return output
 
 # 获取语句中的关键变量
-def get_key(s, s_type):
+def get_key(s, s_type, cwe):
     if(s_type == "Assignment"):
-        return get_var_assign(s)
+        return get_var_assign(s, cwe)
 
     elif(s_type == "Var-Declaration"):
         if(s[0] == '-'):
@@ -503,7 +504,7 @@ def judge_type(s):
 
 # 判断修改处是否为替换类型，如果是则返回true
 # 替换类型：类型名相同而且两句话涉及到修改的关键变量也相同
-def judge_replace(flag, sub_conseq, add_conseq):
+def judge_replace(flag, sub_conseq, add_conseq, cwe):
     if((flag == "if-Condition") or (flag == "while-Condition") or (flag == "for-Condition")):
         add_var, sub_var, mol = get_condition_key(add_conseq, sub_conseq, flag)
         if(add_var == sub_var): #如果两句话中的关键变量完全相同
@@ -529,8 +530,8 @@ def judge_replace(flag, sub_conseq, add_conseq):
         return False
     
     if(flag == "Assignment"):
-        sub_res = get_var_assign(sub_conseq)
-        add_res = get_var_assign(add_conseq)
+        sub_res = get_var_assign(sub_conseq, cwe)
+        add_res = get_var_assign(add_conseq, cwe)
         if(sub_res == add_res):
             return True
         else:
@@ -677,7 +678,7 @@ def check_var_again(res_vars):
         if res == '':
             continue
 
-        if res == 'int' or res == 'char' or 'size_t' in res or 'signed' in res or 'float' in res or res == 'struct' or res.startswith('uint') or res == 'void' or res == 'const': 
+        if res == 'int' or res == 'char' or 'size_t' in res or 'signed' in res or 'float' in res or res == 'struct' or res.startswith('uint') or res == 'void' or res == 'const' or res == 'u64' or res == 'u32': 
             continue
 
         pat = re.compile(r'.*\[(.*?)\].*', re.MULTILINE) # 看是不是数组变量
@@ -1020,9 +1021,43 @@ def get_call_var(s, flag):
     res_vars2 = check_var_again(res_vars)
     return res_vars2
 
+def get_right_skey(right_s):
+    '''
+    变量赋值类型右边主要有三种情况:
+    1. 一个单独的变量/数字/宏定义
+    2. 一个单独的函数调用
+    3. 变量、数字或者函数调用组成的表达式
+    '''
+    res_rkey = []
+    right_list = re.split('[, ]|[ + ]|[ - ]|[ * ]|[ / ]|[ & ]|[+]|[*]|[/]|[;]', right_s)
+    right_list = [m for m in right_list if ((m != '') and (m != '-') and (m != '+') and (m != '/') and (m != '*') and (m != '&'))] # 去除空和其它字符
+    for rl in right_list:
+        new_rl = rl.strip()
+        if(is_number(new_rl) or is_define(new_rl)):
+            continue
+        # 处理变量/函数前面有强制类型转换的情况，例如a = (u64)map
+        if(new_rl[0] == '('):
+            new_rl = new_rl[(new_rl.find(')') + 1):]
+        if('(' in new_rl):
+            new_rl = new_rl.split('(')[-1].strip()
+        if(')' in new_rl):
+            new_rl = new_rl.split(')')[0].strip()
+        
+        res_rkey.append(new_rl)
+    
+    return res_rkey
+
+def is_err_message(left_s):
+    if(left_s == 'err' or left_s == 'error' or left_s == 'ret'):
+        return True
+    if(' err ' in left_s or ' error ' in left_s or ' ret ' in left_s):
+        return True
+    
+    return False
+
 # 在判断变量赋值类型中，用来获取变量名, 没有去掉（int）a 的情况
 # okk
-def get_var_assign(s):
+def get_var_assign(s, cwe):
     s = s[1:].strip()
     s = rmv_str(s)
     ind = s.find('{')
@@ -1053,6 +1088,12 @@ def get_var_assign(s):
 
     else: #有=的等式
         left_part = s.split("=")[0].strip()
+        right_part = s[(s.find('=')):].strip()
+        if(cwe == 'CWE-189' or cwe == 'CWE-190' or is_err_message(left_part)):
+            more_key = get_right_skey(right_part)
+            for mk in more_key:
+                s_tmp_left.append(mk)
+
         pat = re.compile(r'.*\[(.*?)\].*', re.MULTILINE) # 看是不是数组变量
         res = pat.findall(left_part) #检查=前面，也就是变量所在的位置有没有[]
         if (res):
@@ -1097,32 +1138,34 @@ def get_var_assign(s):
             if sym_R!= -1 and sym_L != -1 and '->' not in var[sym_L:sym_R] and ' ' not in var[sym_L:sym_R]:
                 var = var.split(">")[-1]
             var = var.split(' ') # 以空格为分界符获取=前的字符串
-            var = [i for i in var if i != ''] # 去除空
+            # var = [i for i in var if i != ''] # 去除空
+            var = [m for m in var if ((m != '') and (m != '-') and (m != '+') and (m != '/') and (m != '*') and (m != '&') and (m != '<<') and (m != '>>') and (m != '=') and (m != '=='))] # 去除空和其它字符
             if var == []:
-                return []
+                # return []
+                continue
             if((var[-1] == '+') | (var[-1] == '-') | (var[-1] == '/') | (var[-1] == '*') | (var[-1] == '&') | (var[-1] == '|') | (var[-1] == '>>') | (var[-1] == '<<') | (var[-1] == '%')):
                 s_tmp_1.append(var[-2])
             else:
                 s_tmp_1.append(var[len(var) - 1]) # 提取出变量名
 
-            for var in s_tmp_1:
-                var = var.strip()
-                locL = var.rfind("(")
-                locR = var.find(")")
-                true_var = var
+            for var_1 in s_tmp_1:
+                var_1 = var_1.strip()
+                locL = var_1.rfind("(")
+                locR = var_1.find(")")
+                true_var = var_1
                 if locL != -1 and locR != -1 :
                     if locL < locR:
-                        true_var = var[locL+1:locR]
+                        true_var = var_1[locL+1:locR]
                     else:
-                        if locL == len(var) - 1:
-                            true_var = var[:locL]
+                        if locL == len(var_1) - 1:
+                            true_var = var_1[:locL]
                 else:
                     if locL != -1 and locR == -1:
-                        if locL == len(var) - 1:
-                            true_var = var[:locL]
+                        if locL == len(var_1) - 1:
+                            true_var = var_1[:locL]
                     elif locR != -1 and locL == -1:
-                        if locR == len(var) - 1:
-                            true_var = var[:locR]
+                        if locR == len(var_1) - 1:
+                            true_var = var_1[:locR]
  
                 s_tmp.append(true_var.strip())
   
@@ -1209,13 +1252,14 @@ def get_condition_key(add_line, sub_line, line_type):
     return add_var, sub_var, flag
 
 # input:string of all @@ block
-def check_complex_type(s, result_file, txt_file):
+def check_complex_type(s, result_file, txt_file, i):
     '''
     1. 修改了len(conseq_diffs)处
     2. 第一处：替换/纯增删
     3. 哪种类型
-    4. input：diff hunk（@@隔开）
+    4. input：diff hunk（@@隔开）i:当前处理的diff文件名
     '''
+    cwe = i.split('/')[-1].split('_')[1] # 当前处理例子的类型名
     sub_line = 0
     add_line = 0
     conseq_diffs = process(s) #将diff hunk 按照一块块连续的加减行切割，list中每个元素（str）存储的是该diff hunk中的每块连续的加减行
@@ -1412,7 +1456,7 @@ def check_complex_type(s, result_file, txt_file):
             print(sub_keyline, add_keyline)
             print(sub_typeNum[i], add_typeNum[i])
             if(sub_typeNum[i] == add_typeNum[i]): #如果减号行和加号行的类型相同，就一步判断是否为替换的情况
-                res = judge_replace(sub_typeNum[i], conseq_sub, conseq_add)
+                res = judge_replace(sub_typeNum[i], conseq_sub, conseq_add, cwe)
                 #判断两句是否完全一致
                 conseq_sub_tmp = conseq_sub[1:].replace(' ','')
                 conseq_add_tmp = conseq_add[1:].replace(' ','')
@@ -1442,8 +1486,8 @@ def check_complex_type(s, result_file, txt_file):
                     else:
                         key_var = add_var
                 else:
-                    key_var = get_key(conseq_sub, sub_typeNum[i]) #减号行的关键变量
-                    add_var = get_key(conseq_add, sub_typeNum[i]) #加号行的关键变量
+                    key_var = get_key(conseq_sub, sub_typeNum[i], cwe) #减号行的关键变量
+                    add_var = get_key(conseq_add, sub_typeNum[i], cwe) #加号行的关键变量
                     print('key_var:   ', key_var)
                     print('add_var:   ', add_var)
                     if key_var == [] or key_var == None:
@@ -1508,8 +1552,8 @@ def check_complex_type(s, result_file, txt_file):
                 conseq_counter += 1
 
             else: #不是替换（注：可能是两句话类型不同)
-                sub_key_var = get_key(conseq_sub, sub_typeNum[i])
-                add_key_var = get_key(conseq_add, add_typeNum[i])
+                sub_key_var = get_key(conseq_sub, sub_typeNum[i], cwe)
+                add_key_var = get_key(conseq_add, add_typeNum[i], cwe)
                 
                 if(sub_typeNum[i] == add_typeNum[i]):
                     fin_key = []
@@ -1549,7 +1593,7 @@ def check_complex_type(s, result_file, txt_file):
                 conseq_sub = sub_conseq[line_num_sub]
 
                 sub_keyline = int(sub_line) + int(sub_line_num) + int(counter) + line_num_sub #减号行行号
-                sub_key_var = get_key(conseq_sub, sub_typeNum[i])
+                sub_key_var = get_key(conseq_sub, sub_typeNum[i], cwe)
                 if sub_key_var == [] or sub_key_var == None:
                     continue
 
@@ -1561,7 +1605,7 @@ def check_complex_type(s, result_file, txt_file):
                 conseq_add = add_conseq[line_num_add]
                 
                 add_keyline = int(add_line) + int(add_line_num) + int(counter) + line_num_add #加号行行号
-                add_key_var = get_key(conseq_add, add_typeNum[i])
+                add_key_var = get_key(conseq_add, add_typeNum[i], cwe)
                 if add_key_var == [] or add_key_var == None:
                     continue
                 
@@ -1581,18 +1625,18 @@ def main():
     current_work_dir = os.path.abspath(__file__)
     os.chdir(os.path.dirname(current_work_dir))
     print(current_work_dir)
-    f = open('./config.json')   
-    path_data = json.load(f)
+    # f = open('./config.json')   
+    # path_data = json.load(f)
     
-    pkl_file_path = path_data['step1_output']['step1_output_tmp_pkl']
-    txt_file_path = path_data['step1_output']['step1_output_tmp_txt']
-    # pkl_file_path = '/Users/wangning/Documents/研一/跨函数测试/code/result_test/step1_result.pkl'
-    # txt_file_path = '/Users/wangning/Documents/研一/跨函数测试/code/result_test/step1_result.txt'
+    # pkl_file_path = path_data['step1_output']['step1_output_tmp_pkl']
+    # txt_file_path = path_data['step1_output']['step1_output_tmp_txt']
+    pkl_file_path = '/Users/wangning/Documents/研一/跨函数测试/code/result_test/step1_result.pkl'
+    txt_file_path = '/Users/wangning/Documents/研一/跨函数测试/code/result_test/step1_result.txt'
 
     result_file = open(pkl_file_path,'wb')
     txt_file = open(txt_file_path, mode = 'w+', encoding = 'utf-8')
-    diff_file_path = path_data['all_test_code']['all_diff_path'] #正常运行
-    # diff_file_path = '/Users/wangning/Documents/研一/跨函数测试/code/code_test/'
+    # diff_file_path = path_data['all_test_code']['all_diff_path'] #正常运行
+    diff_file_path = '/Users/wangning/Documents/研一/跨函数测试/code/code_test/'
     
 
     print(diff_file_path)
@@ -1628,7 +1672,7 @@ def main():
             print("=======================complex type===========================", file = txt_file)
             pkl.dump("=======================complex type===========================", result_file)
             
-            check_complex_type(s, result_file, txt_file)
+            check_complex_type(s, result_file, txt_file, i)
 
             print("==============================================================")
             print('')
