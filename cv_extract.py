@@ -1,10 +1,8 @@
 # -*- coding: UTF-8 -*-
-from operator import not_
 import os
 import re
 import pickle as pkl
 import json
-from turtle import left
 #from typing import Counter
 val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
             'uint32_t', 'struct', 'guint', 'size_t', 'uint64_t']

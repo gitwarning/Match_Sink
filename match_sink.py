@@ -15,9 +15,9 @@ from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 from slice_op2 import get_call_var
 
-cwe = '416'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/0526/CVE-2019-9003/CVE-2019-9003_CWE-416_77f8269606bf95fcb232ee86f6da80886f1dfae8_ipmi_msghandler.c_2.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/0526/linux/CVE-2019-9003/slices.txt'
+cwe = '119'  # 匹配的漏洞类型
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/CVE-2017-17853_CWE-119_4374f256ce8182019353c0c639bb8d0695b4c941_verifier.c_2.1_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/slices.txt'
 # old_file = 'E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/linux第三组/CVE-2017-8066/CVE-2017-8066_CWE-119_c919a3069c775c1c876bec55e00b2305d5125caa_gs_usb.c_2.1_OLD.c'
 # slice_file = 'E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/linux第三组/CVE-2017-8066/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
