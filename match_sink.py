@@ -16,10 +16,10 @@ from sink_CWE476 import sink_476
 from slice_op2 import get_call_var
 
 cwe = '119'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/CVE-2017-17853_CWE-119_4374f256ce8182019353c0c639bb8d0695b4c941_verifier.c_2.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/slices.txt'
-# old_file = 'E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/linux第三组/CVE-2017-8066/CVE-2017-8066_CWE-119_c919a3069c775c1c876bec55e00b2305d5125caa_gs_usb.c_2.1_OLD.c'
-# slice_file = 'E:/漏洞检测/可自动化实现/前十个软件的测试任务-王可馨/linux/linux第三组/CVE-2017-8066/slices.txt'
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/CVE-2017-17853_CWE-119_4374f256ce8182019353c0c639bb8d0695b4c941_verifier.c_2.1_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/slices.txt'
+old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/ffmpeg/CVE-2013-0850/CVE-2013-0850_CWE-119_d6c184880ee2e09fd68c0ae217173832cee5afc1_h264.c_1.1_OLD.c'
+slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/ffmpeg/CVE-2013-0850/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
@@ -320,6 +320,8 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
         else:
             cv = sp_cv[0]
         if cv.isupper():  # 如果cv全是大写，一般是宏定义的常数，这种也跳过
+            continue
+        if cv.isdigit() or cv.isupper():  # 如果关键变量是常数，直接跳过
             continue
         print("=======now CV is " + cv + "=========")
         sink_lines = after_diff[start_line:]
@@ -837,6 +839,7 @@ def match_sources(slices, sink_cv, sinks):
             break
     source_lines.reverse()  # 将切片逆序
     # print(source_lines)
+
     #开始针对每一个sink_cv匹配source点
     for cv in sink_cv:
         num = len(source_results)
@@ -853,6 +856,16 @@ def match_sources(slices, sink_cv, sinks):
         tmp_source_lines = source_lines  # 如果是表达式转换后的cv需要从转换行开始寻找source点
         if change_cv_flag == 1:
             tmp_source_lines = source_lines[change_line_index:]
+        # 当修改行是常数的赋值语句不应该再继续向上跟踪
+        if '=' in tmp_source_lines[0]:
+            numb = tmp_source_lines[0].split("location")[0]
+            numb = numb.split("=")[-1]
+            if ';' in numb:
+                numb = numb.replace(';', '')
+            numb = numb.strip()
+            if numb.isdigit():  # 如果关键变量是常数，直接跳过
+                source_results.append(tmp_source_lines[0])
+                continue
         # for line in source_lines:
         for line in tmp_source_lines:
             res_tmp = line.split('=')
