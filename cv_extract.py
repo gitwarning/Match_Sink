@@ -1623,8 +1623,8 @@ def main():
     current_work_dir = os.path.abspath(__file__)
     os.chdir(os.path.dirname(current_work_dir))
     print(current_work_dir)
-    # f = open('./config.json')   
-    # path_data = json.load(f)
+    f = open('./config.json')   
+    path_data = json.load(f)
     
     pkl_file_path = path_data['step1_output']['step1_output_tmp_pkl']
     txt_file_path = path_data['step1_output']['step1_output_tmp_txt']
