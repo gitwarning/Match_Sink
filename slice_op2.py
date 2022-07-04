@@ -167,7 +167,10 @@ def sub_slice_backwards(startnode, list_node, not_scan_list):
     
     if predecessors != []:
         for p_node in predecessors: 
-            p_node_loc = int(p_node['location'].split(':')[0])
+            if(p_node['location'] != None):
+                p_node_loc = int(p_node['location'].split(':')[0])
+            else:
+                continue
             if(p_node_loc > startnode_loc):
                 continue               
             list_node, not_scan_list = sub_slice_backwards(p_node, list_node, not_scan_list)
@@ -187,7 +190,10 @@ def program_slice_backwards(pdg, list_startNode, num):#startNode is a list
         startNode_loc = int(startNode['location'].split(':')[0])
         if predecessors != []:
             for p_node in predecessors:
-                p_node_loc = int(p_node['location'].split(':')[0])
+                if(p_node['location'] != None):
+                    p_node_loc = int(p_node['location'].split(':')[0])
+                else:
+                    continue
                 if(p_node_loc > startNode_loc):
                     continue
                 list_node, not_scan_list = sub_slice_backwards(p_node, list_node, not_scan_list)
@@ -235,7 +241,10 @@ def sub_slice_forward(startnode, list_node, not_scan_list):
 
     if successors != []:
         for p_node in successors:       
-            p_node_loc = int(p_node['location'].split(':')[0])
+            if(p_node['location'] != None):
+                p_node_loc = int(p_node['location'].split(':')[0])
+            else:
+                continue
             if(p_node_loc < startnode_loc):
                 continue  
             list_node, not_scan_list = sub_slice_forward(p_node, list_node, not_scan_list)
@@ -258,7 +267,10 @@ def program_slice_forward(pdg, list_startNode, num):#startNode is a list of para
         
         if successors != []:
             for p_node in successors:
-                p_node_loc = int(p_node['location'].split(':')[0])
+                if(p_node['location'] != None):
+                    p_node_loc = int(p_node['location'].split(':')[0])
+                else:
+                    continue
                 if(p_node_loc < startNode_loc):
                     continue
                 list_node, not_scan_list = sub_slice_forward(p_node, list_node, not_scan_list)
@@ -645,7 +657,7 @@ def select_predecessors(db, startnode, variable_name):
         node_id = int(p_node['name'])
         idents_in_pre = get_all_identifiers_and_ptrArrMem_return_list(db, node_id)
         if node_type == 'IdentifierDeclStatement' or node_type == 'Parameter':
-            if variable_name in idents_in_pre:
+            if variable_name.strip() in idents_in_pre:
                 identifierDecl.append(p_node)
     if identifierDecl == []: #如果没有找到，就向上一级变量回溯
         class_name = ''
