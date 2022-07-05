@@ -935,8 +935,8 @@ def get_cond_var(s_list, flag):
 # okk
 def get_call_var(s, flag):
     # if '_log' in s or 'spprintf' in s or 'E_WARNING' in s or 'warning' in s or 'assert' in s or 'print' in s or 'ASSERT' in s or 'Exception' in s or 'Error' in s or 'FAIL' in s:
-    if 'spprintf' in s or 'E_WARNING' in s or 'warning' in s or 'assert' in s or 'ASSERT' in s or 'Exception' in s or 'Error' in s or 'FAIL' in s:
-        return []
+    # if 'spprintf' in s or 'E_WARNING' in s or 'warning' in s or 'assert' in s or 'ASSERT' in s or 'Exception' in s or 'Error' in s or 'FAIL' in s:
+    #     return []
     print(s)
     s = rmv_str(s)
     if 'CreateMockRead(ping_frames.back()' in s:
