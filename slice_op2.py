@@ -801,19 +801,23 @@ def process_return_func(j, vul_define_node, list_start_node, testID, layer, vulf
                     idenDecl = backward_to_decl(j, startnode[0], cv)
                     for ide in idenDecl:
                         new_startnode.append(ide)
-            if(new_startnode != []):
-                startnode = new_startnode
+            # if(new_startnode != []):
+            #     startnode = new_startnode
             
             #从该语句向下切片(只考虑数据依赖)
-            ret_for = program_slice_forward(targetPDG, startnode, current_layer + 1)
+            if(new_startnode != []):
+                ret_for = program_slice_forward(targetPDG, new_startnode, current_layer + 1)
+            else:
+                ret_for = program_slice_forward(targetPDG, startnode, current_layer + 1)
+                
             new_ret_for = []
             if(new_startnode != []):
                 can_append = False
                 for ret_for_tmp in ret_for: #切片截断
                     if(ret_for_tmp[0]['name'] == startnode[0]['name']):
                         can_append = True
-                        if(can_append):
-                            new_ret_for.append(ret_for_tmp)
+                    if(can_append):
+                        new_ret_for.append(ret_for_tmp)
 
                 ret_for = new_ret_for
 
