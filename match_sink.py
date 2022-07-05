@@ -15,16 +15,16 @@ from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 from slice_op2 import get_call_var
 
-cwe = '119'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE125/tcpdump/CVE-2017-12999/CVE-2017-12999_CWE-125_3b32029db354cbc875127869d9b12a9addc75b50_print-isoclns.c_print-isoclns.c_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE125/tcpdump/CVE-2017-12999/slices.txt'
+cwe = '189'  # 匹配的漏洞类型
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/0518/CVE-2012-4565/CVE-2012-4565_CWE-189_8f363b77ee4fbf7c3bbcf5ec2c5ca482d396d664_tcp_illinois.c_1.1_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/0518/linux/CVE-2012-4565/slices.txt'
 # old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/ffmpeg/CVE-2013-0850/CVE-2013-0850_CWE-119_d6c184880ee2e09fd68c0ae217173832cee5afc1_h264.c_1.1_OLD.c'
 # slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/ffmpeg/CVE-2013-0850/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
 diff_file = ''  # 匹配CWE-772、401、415类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
-val_type = ['short', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
+val_type = ['short', 'u64', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
             'uint32_t', 'struct', 'guint', 'size_t', 'uint64_t', 'PSH_Point']
 C_func = ['sizeof']
 # 操作运算符列表
@@ -875,7 +875,7 @@ def match_sources(slices, sink_cv, sinks):
                 line_cvs = res_tmp[0].strip().split(',')  # 可能存在多个变量被赋值,例如a, b = recv()
                 # 如果等号左边是变量声明的情况 stellaris_enet_state * s = qemu_get_nic_opaque ( nc )
                 if line_cvs[0] != cv and len(line_cvs[0].split(" ")) > 1:  # 防止 cv含有->但是却被处理
-                    line_cvs[0] = left_process(line_cvs[0], 'space')
+                    line_cvs[0] = left_process(line_cvs[0], 'space').strip()
                     if '*' in line_cvs[0]:
                         tmps = line_cvs[0].split('*')
                         if 'struct' in tmps[0]:

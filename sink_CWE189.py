@@ -27,6 +27,8 @@ def is_risk_func_189(line ,cv):
         return True
     elif 'FT_MEM_SET' in line: #freetype2软件中该函数经过两层宏定义变成memset
         return True
+    elif 'do_div' in line: #做除法的函数(宏定义)
+        return True
     else:
         return False
 
