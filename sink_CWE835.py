@@ -179,7 +179,27 @@ def sink_835(old_file, func_define, sink_results, diff_file, loc, is_add):
     
     with open(diff_file, 'r') as f:
         diff_content = f.readlines()
-
+    # 如果该类型diff文件中有删除死循环比如while(1),for(;;),那么该行也被纳入sink点候选集
+    diff_loc = 0
+    for i, line in enumerate(diff_content):
+        if '-' == line[0]:
+            if 'while (1) {' in line:
+                diff_loc = i  # 获取到diff文件中死循环的位置，需要将其对应回old文件中
+                break
+            # 还需要添加for(;;) 需要在代码中找一个例子
+    #  从死循环位置反向找回diff块头，获取行号信息
+    if diff_loc != 0:
+        index = diff_loc
+        while index > 0:
+            if diff_content[index][:2] == "@@":
+                tmp_line = diff_content[index].split("@@")[1]
+                num_line = int(tmp_line.split(',')[0].replace('-', '').strip())
+                location = num_line + (diff_loc - index) - 1
+                tmp_line = diff_content[diff_loc][1:].replace('\n', '').strip()
+                sink_line = tmp_line + ' location: ' + str(location)
+                sink_results.append(sink_line)
+                break
+            index = index - 1
     if(is_add == False):#如果不是仅有加号行的文件,标记行号就是修改行号
         start_line = int(loc)
     else:

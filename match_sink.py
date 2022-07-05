@@ -15,13 +15,13 @@ from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 from slice_op2 import get_call_var
 
-cwe = '189'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/0518/CVE-2012-4565/CVE-2012-4565_CWE-189_8f363b77ee4fbf7c3bbcf5ec2c5ca482d396d664_tcp_illinois.c_1.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/0518/linux/CVE-2012-4565/slices.txt'
-# old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/ffmpeg/CVE-2013-0850/CVE-2013-0850_CWE-119_d6c184880ee2e09fd68c0ae217173832cee5afc1_h264.c_1.1_OLD.c'
-# slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/ffmpeg/CVE-2013-0850/slices.txt'
+cwe = '835'  # 匹配的漏洞类型
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/CVE-2017-17853_CWE-119_4374f256ce8182019353c0c639bb8d0695b4c941_verifier.c_2.1_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/slices.txt'
+old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/qemu/CVE-2016-7908/CVE-2016-7908_CWE-399_070c4b92b8cd5390889716677a0b92444d6e087a_mcf_fec.c_1.1_OLD.c'
+slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/qemu/CVE-2016-7908/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-diff_file = ''  # 匹配CWE-772、401、415类型时使用
+diff_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/qemu/CVE-2016-7908/CVE-2016-7908_CWE-399_070c4b92b8cd5390889716677a0b92444d6e087a_mcf_fec.c_1.1.diff'  # 匹配CWE-772、401、415、835类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'u64', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
