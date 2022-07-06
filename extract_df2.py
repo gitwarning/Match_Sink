@@ -561,6 +561,8 @@ def get_slice_file_sequence(store_filepath, list_result, count, func_name, start
                     pit_var = ass_var[i].split('* ')
                     for j in range(1, len(pit_var)):
                         tmp_var = pit_var[j]
+                        if(tmp_var == ''):
+                            continue
                         if((tmp_var[-1] == ',') or (tmp_var[-1] == ';')):
                             point_var_list.append(tmp_var[:-1].strip())
                         else:
