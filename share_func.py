@@ -206,6 +206,8 @@ def is_calculation(line, cv):
     if ('* ' + cv) in line and '=' in line:
         if '*' == line[0]:
             return False
+        if 'struct ' in line:  # struct ext4_sb_info * sbi = EXT4_SB ( sb )
+            return False
         return True
     if (cv + ' +') in line or ('+ ' + cv) in line:
         return True
