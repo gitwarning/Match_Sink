@@ -21,6 +21,8 @@ def is_risk_func_189(line ,cv):
         return True
     elif ('recv' in line and 'recv ->' not in line):
         return True
+    elif('vfs_write' in line):
+        return True
     elif 'AcquireVirtualMemory' in line:
         return True
     elif 'TT_NEXT_U' in line: #针对freetype2软件中的TT_NEXT_ULONG/INT(...)宏定义

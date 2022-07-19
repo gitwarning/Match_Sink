@@ -102,8 +102,8 @@ def is_risk_func(line, cv):
             return True
         elif 'TT_NEXT_U' in func:  # 针对freetype2软件中的TT_NEXT_ULONG/INT(...)宏定义
             return True
-        else:
-            return False
+    
+    return False
 
 def is_scatterlist_func(line, cv):
     if not has_cv(cv, line):  # ar -> gpe . en = g_malloc0 ( len / 2 ); 避免这种情况匹配不到
