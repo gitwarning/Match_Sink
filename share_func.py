@@ -90,6 +90,8 @@ def is_risk_func(line, cv):
             return True
         elif ('put_bits' in func) or 'skb_put' in func:
             return True
+        elif ('put_page' in func):
+            return True
         elif ('copy' in func) and 'copy_size' not in func:
             return True
         elif ('recv' in func and 'recv ->' not in func):
