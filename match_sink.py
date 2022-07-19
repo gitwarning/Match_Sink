@@ -15,11 +15,11 @@ from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 from slice_op2 import get_call_var
 
-cwe = '125'  # 匹配的漏洞类型
-# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/CVE-2017-17853_CWE-119_4374f256ce8182019353c0c639bb8d0695b4c941_verifier.c_2.1_OLD.c'
-# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/slices.txt'
-old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/CVE-2016-10208/CVE-2016-10208_CWE-125_3a4b77cd47bb837b8557595ec7425f281f2ca1fe_super.c_1.1_OLD.c'
-slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/CVE-2016-10208/slices.txt'
+cwe = '416'  # 匹配的漏洞类型
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE416/linux/CVE-2017-18218/CVE-2017-18218_CWE-416_27463ad99f738ed93c7c8b3e2e5bc8c4853a2ff2_hns_enet.c_2.1_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE416/linux/CVE-2017-18218/slices.txt'
+# old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/CVE-2016-10208/CVE-2016-10208_CWE-125_3a4b77cd47bb837b8557595ec7425f281f2ca1fe_super.c_1.1_OLD.c'
+# slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/CVE-2016-10208/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
 diff_file = ''  # 匹配CWE-772、401、415、835类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
@@ -355,7 +355,20 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                 if func_name in sink_lines[i - 1]:
                     tmp = sink_lines[i - 1]
                     tmp = tmp[tmp.find(func_name):]
-                    call_paras = tmp[tmp.find('(') + 1:tmp.find(')')].split(',')  # 从函数名开始向后面查找括号的方式得到函数参数
+                    # call_paras = tmp[tmp.find('(') + 1:tmp.find(')')].split(',')  # 从函数名开始向后面查找括号的方式得到函数参数
+                    # 函数调用的参数可能也是一个函数调用，用逗号分隔不合理
+                    call_paras_tmp = tmp[tmp.find('(') + 1:tmp.find(')')].split(',')
+                    call_paras = []
+                    cp_tmp = ''
+                    for cp in call_paras_tmp:
+                        if(cp_tmp == ''):
+                            call_paras.append(cp)
+                        if('(' in cp): # 函数嵌套
+                            cp_tmp = cp
+                        if(')' in cp):
+                            cp = cp_tmp + cp
+                            cp_tmp = ''
+
                     cvv = ' ' + cv + ' '
                     if cvv in call_paras:
                         i = call_paras.index(cvv)
