@@ -104,6 +104,8 @@ def is_risk_func(line, cv):
             return True
         elif 'TT_NEXT_U' in func:  # 针对freetype2软件中的TT_NEXT_ULONG/INT(...)宏定义
             return True
+        elif 'dev_info' in func:  # CVE-2017-8064
+            return True
     
     return False
 

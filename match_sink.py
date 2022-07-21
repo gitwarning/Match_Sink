@@ -15,11 +15,11 @@ from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 from slice_op2 import get_call_var
 
-cwe = '189'  # 匹配的漏洞类型
-old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE189/linux/CVE-2015-4001/CVE-2015-4001_CWE-189_b1bb5b49373b61bf9d2c73a4d30058ba6f069e4c_ozhcd.c_1.1_OLD.c'
-slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE189/linux/CVE-2015-4001/slices.txt'
-# old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/CVE-2016-10208/CVE-2016-10208_CWE-125_3a4b77cd47bb837b8557595ec7425f281f2ca1fe_super.c_1.1_OLD.c'
-# slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/CVE-2016-10208/slices.txt'
+cwe = '119'  # 匹配的漏洞类型
+# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/CVE-2017-17853_CWE-119_4374f256ce8182019353c0c639bb8d0695b4c941_verifier.c_2.1_OLD.c'
+# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/slices.txt'
+old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨3/linux/CVE-2017-8064/CVE-2017-8064_CWE-119_005145378c9ad7575a01b6ce1ba118fb427f583a_dvb_usb_core.c_2.1_OLD.c'
+slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨3/linux/CVE-2017-8064/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
 diff_file = ''  # 匹配CWE-772、401、415、835类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
