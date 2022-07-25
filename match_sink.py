@@ -15,11 +15,11 @@ from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 from slice_op2 import get_call_var
 
-cwe = '119'  # 匹配的漏洞类型
-# old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/CVE-2017-17853_CWE-119_4374f256ce8182019353c0c639bb8d0695b4c941_verifier.c_2.1_OLD.c'
-# slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/slices.txt'
-old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨3/linux/CVE-2017-8064/CVE-2017-8064_CWE-119_005145378c9ad7575a01b6ce1ba118fb427f583a_dvb_usb_core.c_2.1_OLD.c'
-slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨3/linux/CVE-2017-8064/slices.txt'
+cwe = '125'  # 匹配的漏洞类型
+old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/CVE-2017-17853_CWE-119_4374f256ce8182019353c0c639bb8d0695b4c941_verifier.c_2.1_OLD.c'
+slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/slices.txt'
+# old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨3/linux/CVE-2017-8064/CVE-2017-8064_CWE-119_005145378c9ad7575a01b6ce1ba118fb427f583a_dvb_usb_core.c_2.1_OLD.c'
+# slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨3/linux/CVE-2017-8064/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
 diff_file = ''  # 匹配CWE-772、401、415、835类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
@@ -278,6 +278,23 @@ def is_return_cv(line, cv):
     else:
         return False
 
+def rmv_str(s): #去除了字符串
+    while "\'" in s:
+        indL = s.find('\'')
+        if '\'' in s[indL + 1:]:
+            indR = s.find('\'',indL+1)
+            s = s[:indL] + '@@@@' + s[indR+1:]
+        else:
+            s = s[:indL] + '@@@@' + s[indL + 1:]
+   
+    while "\"" in s:
+        indL = s.find('\"')
+        if '\"' in s[indL + 1:]:
+            indR = s.find('\"',indL+1)
+            s = s[:indL] + '@@@@' + s[indR+1:]
+        else:
+            s = s[:indL] + '@@@@' + s[indL + 1:]
+    return s
 
 def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point_var):
     # 对于每一个cv都去匹配sink点
@@ -354,6 +371,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                 func_name = get_funcname(func_define)[0]
                 if func_name in sink_lines[i - 1]:
                     tmp = sink_lines[i - 1]
+                    tmp = rmv_str(tmp)
                     tmp = tmp[tmp.find(func_name):]
                     # call_paras = tmp[tmp.find('(') + 1:tmp.find(')')].split(',')  # 从函数名开始向后面查找括号的方式得到函数参数
                     # 函数调用的参数可能也是一个函数调用，用逗号分隔不合理

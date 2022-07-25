@@ -92,6 +92,8 @@ def is_risk_func(line, cv):
             return True
         elif ('put_page' in func):
             return True
+        elif('count_bits' in func): # WavPack中的一个宏定义函数（用于数组访问）
+            return True
         elif ('copy' in func) and 'copy_size' not in func:
             return True
         elif ('recv' in func and 'recv ->' not in func):
