@@ -15,11 +15,11 @@ from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 from slice_op2 import get_call_var
 
-cwe = '22'  # 匹配的漏洞类型
+cwe = '476'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/CVE-2017-17853_CWE-119_4374f256ce8182019353c0c639bb8d0695b4c941_verifier.c_2.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/slices.txt'
-old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨4/CVE-2015-1191/CVE-2015-1191_CWE-22_fdad1406b3ec809f4954ff7cdf9e99eb18c2458f_pigz.c_pigz.c_OLD.c'
-slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨4/CVE-2015-1191/slices.txt'
+old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨4/linux/CVE-2011-4594/CVE-2011-4594_NVD-CWE-Other_bc909d9ddbf7778371e36a651d6e4194b1cc7d4c_socket.c_1.1_OLD.c'
+slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨4/linux/CVE-2011-4594/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
 diff_file = ''  # 匹配CWE-772、401、415、835类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
@@ -933,9 +933,12 @@ def match_sources(slices, sink_cv, sinks):
 
                 if (cv in line_cvs):
                     funcname = get_funcname(line)
+                    funcname = list(set(funcname))
                     if funcname:  # 如果是外部函数
                         if 'sizeof' in funcname:
                             funcname.remove('sizeof')
+                        if 'strlen' in funcname:
+                            funcname.remove('strlen')
                         if len(funcname) == 1 and funcname[0] not in C_func:
                             if cv == "error" or cv == "err" or cv == "errors":
                                 new_cv_list = get_call_var(line, 1)
@@ -970,6 +973,8 @@ def match_sources(slices, sink_cv, sinks):
             if has_only_cv(line, tmp_cv) and not has_cv_fz_left(tmp_cv, line) and line != slices[0]:  # 如果含有关键变量但不含等号赋值
                 tmp_line = line  # 先暂存当前语句，然后继续向上找
                 print('含有关键变量但cv不在等号左边,暂存的语句是: ', tmp_line)
+                if 'int '+cv+' ;' in line:
+                    source_results.append(line)
                 if 'for (' in line:
                     tmp_items = re.split('[(;]', line)
                     for item in tmp_items:
