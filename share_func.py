@@ -108,6 +108,8 @@ def is_risk_func(line, cv):
             return True
         elif 'dev_info' in func:  # CVE-2017-8064
             return True
+        elif 'strdup' in func:  # CVE-2018-7254
+            return True
     
     return False
 
@@ -200,19 +202,21 @@ def is_array(line, cv):
 
 #  sink点是整数运算导致的整数溢出类型匹配
 def is_calculation(line, cv):
-    if '(' in line and ')' in line:  # 在函数参数或者if，while条件中，整数溢出不需要等号
-        tmps = line[line.find('('):line.find(')') - 1]
-        if ',' in tmps:
-            tmps = tmps.split(',')
-            for tmp in tmps:
-                if (cv + ' *') in tmp or (cv + ' +') in tmp or ('* ' + cv) in tmp or ('+ ' + cv) in tmp:
-                    return True
+    if ' if ' in line or ' while ' in line or ' for ' in line:  # 在函数参数或者if，while条件中，整数溢出不需要等号
+        if '(' in line and ')' in line:
+
+            tmps = line[line.find('('):line.find(')') - 1]
+            if ',' in tmps:
+                tmps = tmps.split(',')
+                for tmp in tmps:
+                    if (cv + ' *') in tmp or (cv + ' +') in tmp or ('* ' + cv) in tmp or ('+ ' + cv) in tmp:
+                        return True
     if (cv + ' *') in line and '=' in line:  # 要有等号才算是整数溢出吗？
         return True
     if ('* ' + cv) in line and '=' in line:
         if '*' == line[0]:
             return False
-        if 'struct ' in line:  # struct ext4_sb_info * sbi = EXT4_SB ( sb )
+        if 'struct ' in line or 'char * '+cv in line:  # struct ext4_sb_info * sbi = EXT4_SB ( sb )
             return False
         return True
     if (cv + ' +') in line or ('+ ' + cv) in line:
@@ -220,6 +224,8 @@ def is_calculation(line, cv):
     if (cv + '+=') in line:
         return True
     if (cv + ' -') in line and (cv + ' ->') not in line:
+        return True
+    if (cv + ' = -') in line:
         return True
     if ('- ' + cv) in line:
         return True
