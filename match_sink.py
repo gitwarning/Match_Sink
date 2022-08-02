@@ -15,13 +15,13 @@ from sink_CWE835 import sink_835
 from sink_CWE476 import sink_476
 from slice_op2 import get_call_var
 
-cwe = '22'  # 匹配的漏洞类型
+cwe = '835'  # 匹配的漏洞类型
 # old_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/CVE-2017-17853_CWE-119_4374f256ce8182019353c0c639bb8d0695b4c941_verifier.c_2.1_OLD.c'
 # slice_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/Linux/切片结果（詹景琦）/CVE-2017-17853/slices.txt'
-old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨4/CVE-2012-6607/CVE-2012-6607_CWE-22_163877441402e464266b45ee98e24bb652971def_internal.c_internal.c_OLD.c'
-slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨4/CVE-2012-6607/slices.txt'
+old_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨4/CVE-2010-3880/CVE-2010-3880_CWE-399_22e76c849d505d87c5ecf3d3e6742a65f0ff4860_inet_diag.c_2.1_OLD.c'
+slice_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨4/CVE-2010-3880/slices.txt'
 # diff_file = '/Users/wangning/Documents/研一/跨函数测试/sink-source点匹配测试/CWE835/qemu/CVE-2017-6505/CVE-2017-6505_CWE-835_95ed56939eb2eaa4e2f349fe6dcd13ca4edfd8fb_hcd-ohci.c_1.1.diff'
-diff_file = ''  # 匹配CWE-772、401、415、835类型时使用
+diff_file = 'E:/漏洞检测/可自动化实现/漏洞重新测试/王可馨4/CVE-2010-3880/CVE-2010-3880_CWE-399_22e76c849d505d87c5ecf3d3e6742a65f0ff4860_inet_diag.c_2.1.diff'  # 匹配CWE-772、401、415、835类型时使用
 list_key_words = ['if', 'while', 'for']  # 控制结构关键字
 # 变量类型列表
 val_type = ['short', 'u64', 'int', 'long', 'char', 'float', 'double', 'struct', 'union', 'enum', 'const', 'unsigned', 'signed',
@@ -355,7 +355,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                 return_flag = True
             # 如果当前行是函数定义行，不参加sink点的匹配，但是可能涉及到sink点的转换（通过参数位置转换
             if 'void' == line.strip():
-                line = line + " "+ after_diff[i+1]
+                line = line + " " + after_diff[i+1]
             if is_funcdefine(line):
                 # 函数定义的上一行不一定是该函数的函数调用行,先判断上一行是否是函数调用行（函数名）获取上一行的信息，
                 # 判断cv是否在函数调用语句的参数中，如果在就记录下来cv的位置（第几个参数）
@@ -375,7 +375,7 @@ def find_sink(after_diff, cv_list, sink_results, sink_cv, epoch, vul_name, point
                     tmp = tmp[tmp.find(func_name):]
                     # call_paras = tmp[tmp.find('(') + 1:tmp.find(')')].split(',')  # 从函数名开始向后面查找括号的方式得到函数参数
                     # 函数调用的参数可能也是一个函数调用，用逗号分隔不合理
-                    call_paras_tmp = tmp[tmp.find('(') + 1:tmp.find(')')].split(',')
+                    call_paras_tmp = tmp[tmp.find('(') + 1:tmp.rfind(')')].split(',')
                     call_paras = []
                     cp_tmp = ''
                     for cp in call_paras_tmp:
